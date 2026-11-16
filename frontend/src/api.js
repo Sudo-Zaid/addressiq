@@ -16,7 +16,11 @@ async function call(method, path, body, isForm = false) {
   let data = null
   try { data = await r.json() } catch { /* empty */ }
   if (!r.ok) {
-    if (r.status === 401) auth.clear()
+    if (r.status === 401) {
+      // token missing / stale (e.g. server was restarted): clear it and go to a clean login, once
+      auth.clear()
+      if (!location.pathname.startsWith('/login') && !location.pathname.startsWith('/register')) location.replace('/login')
+    }
     throw new Error((data && (data.detail || data.message)) || ('HTTP ' + r.status))
   }
   return data
