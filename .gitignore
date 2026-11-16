@@ -1,0 +1,8 @@
+node_modules/
+frontend/dist/
+data/app.sqlite
+data/osm_raw.json
+data/*.log
+__pycache__/
+*.pyc
+.claude/
