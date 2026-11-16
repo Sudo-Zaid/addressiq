@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { LayoutDashboard, Package, Map, Brain, ClipboardList, LogOut, Menu, Building2 } from 'lucide-react'
-import { useState } from 'react'
-import { auth } from '../api'
+import { useEffect, useState } from 'react'
+import { api, auth } from '../api'
 import { Logo } from '../components/ui'
 
 const SELLER_NAV = [
@@ -19,6 +19,8 @@ const ADMIN_NAV = [
 ]
 export default function SellerShell() {
   const nav = useNavigate(); const u = auth.user(); const [open, setOpen] = useState(false); const loc = useLocation()
+  // a token can go stale (server reset): verify once on mount and send the user to a clean login instead of scattered errors
+  useEffect(() => { api.get('/api/me').catch(() => { auth.clear(); nav('/login') }) }, [nav])
   const NAV = u?.role === 'admin' ? ADMIN_NAV : SELLER_NAV
   const title = NAV.find(n => n.end ? loc.pathname === n.to : loc.pathname.startsWith(n.to))?.label || ''
   return <div className="h-full flex">
