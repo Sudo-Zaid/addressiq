@@ -11,6 +11,13 @@ URDU_WORDS = {  # Urdu script -> Roman (matching only)
     'نزدیک': 'nazdeek', 'پاس': 'pass', 'مکان': 'makan', 'گھر': 'ghar', 'نمبر': 'no', 'جہلم': 'jhelum', 'دینہ': 'dina',
     'کے': 'ke', 'کی': 'ki', 'کا': 'ka', 'والا': 'wala', 'والی': 'wali', 'نزد': 'nazdeek', 'اسلام پورہ': 'islampura', 'اسلام پورا': 'islampura',
     'پورہ': 'pura', 'پورا': 'pura', 'آباد': 'abad', 'نگر': 'nagar', 'ہاؤسنگ': 'housing', 'سٹی': 'city', 'سیٹلائٹ': 'satellite',
+    # common Jhelum / Dina place words (Urdu script drops short vowels, so spell them out explicitly)
+    'بلال': 'bilal', 'مشین': 'machine', 'ماڈل': 'model', 'کینٹ': 'cantt', 'جی ٹی روڈ': 'gt road', 'غوثیہ': 'ghousia', 'جامعہ': 'jamia',
+    'مدینہ': 'madina', 'قریشی': 'qureshi', 'فیصل': 'faisal', 'اقبال': 'iqbal', 'مجاہد': 'mujahid', 'سول لائنز': 'civil lines',
+    'میزان': 'meezan', 'الائیڈ': 'allied', 'حبیب': 'habib', 'روہتاس': 'rohtas', 'فیضان': 'faizan', 'گورنمنٹ': 'govt', 'بوائز': 'boys',
+    'گرلز': 'girls', 'ہائی': 'high', 'پرائمری': 'primary', 'ریلوے': 'railway', 'اسٹیشن': 'station', 'سٹیشن': 'station', 'ٹاور': 'tower',
+    'ہاؤس': 'house', 'گیٹ': 'gate', 'ٹیولپ': 'tulip', 'شاہین': 'shaheen', 'عسکری': 'askari', 'لالہ زار': 'lalazar', 'گلشن': 'gulshan',
+    'کالا گجراں': 'kala gujran', 'سرائے عالمگیر': 'sarai alamgir', 'منگلا': 'mangla', 'یونیورسٹی': 'university', 'اکیڈمی': 'academy',
     'بلاک': 'block', 'سیکٹر': 'sector', 'سٹریٹ': 'street', 'اسٹریٹ': 'street', 'جامع': 'jamia', 'شہر': 'city',
     'پارک': 'park', 'بینک': 'bank', 'ہوٹل': 'hotel', 'دکان': 'shop', 'مارکیٹ': 'market', 'مدرسہ': 'madrasa',
 }

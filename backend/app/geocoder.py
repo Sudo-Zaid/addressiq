@@ -66,10 +66,13 @@ class Gazetteer:
                     s = max(s, 0.92 * fuzz.partial_ratio(phrase_norm, r['norm']) / 100.0)
                 if r['phon'] == pk: s = max(s, 0.93)
                 elif fuzz.ratio(pk, r['phon']) >= 85: s = max(s, 0.80)
+                elif pk and set(pk.split()) <= set(r['phon'].split()): s = max(s, 0.85)   # Urdu script drops vowels: "blal town" ~ "bilal town jhelum"
                 if s >= cutoff:
                     if specific:
                         # at least one specific (non-generic) word of the query must appear in the name
-                        if not any(fuzz.partial_ratio(w, r['norm']) >= 80 for w in specific): s *= 0.6
+                        # (spelled similarly, or with the same consonant skeleton — Urdu script drops vowels)
+                        rp = set(r['phon'].split())
+                        if not any(fuzz.partial_ratio(w, r['norm']) >= 80 or phonetic_key(w) in rp for w in specific): s *= 0.6
                     else:
                         # query is only generic words ("city housing"): the whole phrase must appear in the name
                         if len(phrase_norm.split()) < 2 or fuzz.partial_ratio(phrase_norm, r['norm']) < 90: s *= 0.5

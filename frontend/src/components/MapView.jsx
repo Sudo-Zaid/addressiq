@@ -48,7 +48,11 @@ export default function MapView({ markers = [], zones = [], draw = null, onClick
     })
     m.on('click', (e) => cb.current.onClick && cb.current.onClick({ lat: e.lngLat.lat, lon: e.lngLat.lng }))
     map.current = m
-    return () => { m.remove(); map.current = null; ready.current = false }
+    // the container can change size after the map was created (mobile layout, sidebar, keyboard): keep the canvas in sync
+    const ro = new ResizeObserver(() => { try { m.resize() } catch { /* map removed */ } })
+    ro.observe(el.current)
+    const t = setTimeout(() => { try { m.resize() } catch { /* ignore */ } }, 300)
+    return () => { clearTimeout(t); ro.disconnect(); m.remove(); map.current = null; ready.current = false }
   }, [])
 
   // zones + draw
@@ -67,6 +71,7 @@ export default function MapView({ markers = [], zones = [], draw = null, onClick
       }
       m.getSource('draw').setData({ type: 'FeatureCollection', features: f })
       if (fit === 'zones' && zones.length) {
+        m.resize()
         const b = new maplibregl.LngLatBounds(); zones.forEach(z => z.polygon.forEach(p => b.extend([p[1], p[0]]))); m.fitBounds(b, { padding: 40, maxZoom: 14, duration: 600 })
       }
     }
@@ -115,6 +120,7 @@ export default function MapView({ markers = [], zones = [], draw = null, onClick
       }
       const pts = markers.filter(k => k.lat != null)
       if (fit === 'markers' && pts.length) {
+        m.resize()
         const b = new maplibregl.LngLatBounds(); pts.forEach(k => { b.extend([k.lon, k.lat]); (k.alternatives || []).forEach(a => b.extend([a.lon, a.lat])) })
         if (me) b.extend([me.lon, me.lat])
         m.fitBounds(b, { padding: 60, maxZoom: pts.length === 1 ? 16 : 14.5, duration: 600 })
@@ -125,5 +131,5 @@ export default function MapView({ markers = [], zones = [], draw = null, onClick
     ready.current ? apply() : m.once('aiq-ready', apply)
   }, [markers, fit, me])
 
-  return <div ref={el} className={'w-full h-full rounded-2xl overflow-hidden ' + className} />
+  return <div ref={el} className={'w-full h-full min-h-[300px] rounded-2xl overflow-hidden ' + className} />
 }

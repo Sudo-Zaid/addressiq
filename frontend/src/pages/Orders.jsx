@@ -10,7 +10,7 @@ export default function Orders() {
   const [fixing, setFixing] = useState(null); const [fixPos, setFixPos] = useState(null); const [toast, setToast] = useState(null); const file = useRef()
   const say = (msg, kind) => { setToast({ msg, kind }); setTimeout(() => setToast(null), 2600) }
   const load = async () => { const [o, z, r] = await Promise.all([api.get('/api/orders'), api.get('/api/zones'), api.get('/api/riders')]); setOrders(o); setZones(z); setRiders(r) }
-  useEffect(() => { load().catch(e => say(e.message, 'err')) }, [])
+  useEffect(() => { load().catch(e => say(e.message, 'err')); const t = setInterval(() => { if (!fixing) load().catch(() => {}) }, 10000); return () => clearInterval(t) }, [fixing])
   const cur = orders.find(o => o.id === sel)
 
   async function upload(f) { if (!f) return; setBusy(true); try { const r = await api.upload('/api/orders/upload', f); say(`${r.created} orders added, geocoded and assigned`); await load() } catch (e) { say(e.message, 'err') } finally { setBusy(false); file.current.value = '' } }
@@ -33,12 +33,12 @@ export default function Orders() {
         <a className="btn-ghost" href="/sample_orders.csv" download><FileDown size={16} /> Sample CSV</a>
         <div className="ml-auto flex items-center gap-2"><span className="text-xs text-muted">{orders.length} orders</span>{orders.length > 0 && <button className="btn-ghost text-red" onClick={clearAll}><Trash2 size={16} /> Clear</button>}</div>
       </div>
-      {adding && <form onSubmit={add} className="card p-4 grid md:grid-cols-[1fr_1fr_2fr_120px_auto] gap-3 items-end">
+      {adding && <form onSubmit={add} autoComplete="off" className="card p-4 grid md:grid-cols-[1fr_1fr_2fr_120px_auto] gap-3 items-end">
         <div><label className="label">Customer</label><input className="input" value={form.customer_name} onChange={e => setForm({ ...form, customer_name: e.target.value })} required /></div>
-        <div><label className="label">Phone</label><input className="input" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></div>
+        <div><label className="label">Phone</label><input className="input" inputMode="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></div>
         <div><label className="label">Address (as the customer wrote it)</label><input className="input" value={form.address_text} onChange={e => setForm({ ...form, address_text: e.target.value })} placeholder='e.g. "Makan 7, Pak Uk Hospital ke samne, Jhelum"' required /></div>
-        <div><label className="label">COD (Rs)</label><input className="input" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} /></div>
-        <button className="btn-primary" disabled={busy}>{busy ? <Spinner /> : 'Find on map'}</button>
+        <div><label className="label">COD (Rs)</label><input className="input" inputMode="numeric" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} /></div>
+        <button className="btn-primary w-full md:w-auto py-3" disabled={busy}>{busy ? <Spinner /> : <><MapPinned size={16} /> Find on map &amp; assign</>}</button>
       </form>}
       <div className="card overflow-auto flex-1 min-h-[300px]">
         {orders.length === 0 ? <Empty icon={Package} title="No orders yet" text="Upload the sample CSV (15 real Jhelum & Dina addresses) or add one address." /> :
@@ -57,7 +57,7 @@ export default function Orders() {
       </div>
     </div>
     <div className="flex flex-col gap-4 min-h-[500px]">
-      <div className="card p-2 flex-1 min-h-[320px]"><MapView markers={markers} zones={zones} onMarkerClick={(id) => setSel(Number(id))} onMarkerDrag={(id, p) => { if (Number(id) === fixing) setFixPos(p) }} onClick={(p) => { if (fixing) setFixPos(p) }} fit={fixing ? null : (sel ? 'selected' : 'markers')} /></div>
+      <div className="card p-2 h-[360px] xl:h-auto xl:flex-1 xl:min-h-[320px]"><MapView markers={markers} zones={zones} onMarkerClick={(id) => setSel(Number(id))} onMarkerDrag={(id, p) => { if (Number(id) === fixing) setFixPos(p) }} onClick={(p) => { if (fixing) setFixPos(p) }} fit={fixing ? null : (sel ? 'selected' : 'markers')} /></div>
       {fixing && <div className="card p-3 text-sm bg-blue-50 border-blue-200"><b>Fix pin:</b> drag the blue pin (or click the map) to where the customer actually is, then press ✓. The address is saved to the learning store.</div>}
       {cur && <div className="card p-4 text-sm">
         <div className="flex items-start gap-2"><MapPinned size={18} className="text-navy mt-0.5" /><div className="min-w-0"><div className="font-bold text-navy">{cur.customer_name}</div><div className="text-muted">{cur.address_text}</div></div><div className="ml-auto"><Chip flag={cur.flag} /></div></div>

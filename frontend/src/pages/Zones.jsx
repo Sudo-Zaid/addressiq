@@ -25,7 +25,7 @@ export default function Zones() {
             <button className="btn-ghost" onClick={() => setDraw(null)}><X size={16} /> Cancel</button></>}
         <span className="ml-auto text-xs text-muted">An order is auto-assigned to the rider of the zone its pin falls in.</span>
       </div>
-      <div className="card p-2 flex-1 min-h-[480px]"><MapView zones={zones} draw={draw} fit="zones" onClick={(p) => { if (draw) setDraw({ ...draw, points: [...draw.points, [p.lat, p.lon]] }) }} /></div>
+      <div className="card p-2 h-[420px] xl:h-auto xl:flex-1 xl:min-h-[480px]"><MapView zones={zones} draw={draw} fit="zones" onClick={(p) => { if (draw) setDraw({ ...draw, points: [...draw.points, [p.lat, p.lon]] }) }} /></div>
     </div>
     <div className="grid gap-4 content-start">
       <div className="card p-4"><h3 className="font-bold text-navy">Zones</h3>

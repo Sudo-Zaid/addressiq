@@ -7,7 +7,10 @@ import { Package, Upload } from 'lucide-react'
 
 export default function Dashboard() {
   const [stats, setStats] = useState(null); const [orders, setOrders] = useState([]); const [zones, setZones] = useState([]); const [riders, setRiders] = useState([]); const [sel, setSel] = useState(null)
-  useEffect(() => { (async () => { const [s, o, z, r] = await Promise.all([api.get('/api/stats'), api.get('/api/orders'), api.get('/api/zones'), api.get('/api/riders')]); setStats(s); setOrders(o); setZones(z); setRiders(r) })().catch(console.error) }, [])
+  useEffect(() => {
+    const load = () => Promise.all([api.get('/api/stats'), api.get('/api/orders'), api.get('/api/zones'), api.get('/api/riders')]).then(([s, o, z, r]) => { setStats(s); setOrders(o); setZones(z); setRiders(r) }).catch(console.error)
+    load(); const t = setInterval(load, 10000); return () => clearInterval(t)   // live: new orders / deliveries appear without a reload
+  }, [])
   const markers = orders.filter(o => o.lat != null).map(o => ({ id: String(o.id), lat: o.lat, lon: o.lon, color: flagOf(o.flag).color, radius: sel === o.id ? o.radius_m : 0, selected: sel === o.id,
     html: `<b>${o.customer_name}</b><br/>${o.address_text}<br/><span style="color:${flagOf(o.flag).color};font-weight:700">${flagOf(o.flag).label}</span> · ${Math.round(o.radius_m || 0)} m` }))
   const K = ({ v, l, c }) => <div className="kpi"><div className="v" style={{ color: c }}>{v ?? '–'}</div><div className="l">{l}</div></div>
@@ -15,8 +18,8 @@ export default function Dashboard() {
     <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
       <K v={stats?.orders} l="Orders" /><K v={stats?.found} l="Found" c="#3C8D5A" /><K v={stats?.area_only} l="Area only" c="#b4731a" /><K v={stats?.ambiguous} l="Two options" c="#2E4A8B" /><K v={stats?.unresolved} l="Call first" c="#C0392B" /><K v={stats?.delivered} l="Delivered" />
     </div>
-    <div className="grid xl:grid-cols-[1fr_360px] gap-5 min-h-[560px]">
-      <div className="card p-2 min-h-[460px]"><MapView markers={markers} zones={zones} onMarkerClick={(id) => setSel(Number(id))} fit={sel ? 'selected' : 'markers'} /></div>
+    <div className="grid xl:grid-cols-[1fr_360px] gap-5 xl:min-h-[560px]">
+      <div className="card p-2 h-[420px] xl:h-auto xl:min-h-[460px]"><MapView markers={markers} zones={zones} onMarkerClick={(id) => setSel(Number(id))} fit={sel ? 'selected' : 'markers'} /></div>
       <div className="grid gap-5 content-start">
         <div className="card p-4">
           <div className="flex items-center justify-between"><h3 className="font-bold text-navy">Latest orders</h3><Link to="/app/orders" className="text-xs font-semibold text-navy-3">All orders →</Link></div>

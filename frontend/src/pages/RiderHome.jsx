@@ -6,7 +6,10 @@ import { ChevronRight, PackageOpen, CheckCircle2 } from 'lucide-react'
 
 export default function RiderHome() {
   const [orders, setOrders] = useState([]); const [tab, setTab] = useState('todo')
-  useEffect(() => { api.get('/api/orders').then(setOrders).catch(console.error) }, [])
+  useEffect(() => {
+    const load = () => api.get('/api/orders').then(setOrders).catch(console.error)
+    load(); const t = setInterval(load, 8000); return () => clearInterval(t)   // new orders assigned by the shop show up by themselves
+  }, [])
   const todo = orders.filter(o => o.status !== 'delivered'), done = orders.filter(o => o.status === 'delivered')
   const list = tab === 'todo' ? todo : done
   return <div>
