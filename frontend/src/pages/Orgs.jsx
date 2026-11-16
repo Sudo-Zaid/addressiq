@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api'
 import { Toast, Spinner } from '../components/ui'
-import { Building2, Plus, Power, Copy, Users, Bike, Map, Package, Brain } from 'lucide-react'
+import { Building2, Plus, Power, Copy, Users, Bike, Map, Package, Brain, Trash2 } from 'lucide-react'
 
 const TYPES = [['courier', 'Courier company'], ['restaurant', 'Restaurant / food'], ['shop', 'Online shop'], ['other', 'Other']]
 
@@ -13,6 +13,10 @@ export default function Orgs() {
   useEffect(() => { load() }, [])
   async function add(e) { e.preventDefault(); setBusy(true); try { await api.post('/api/admin/orgs', f); setF({ name: '', type: 'courier', contact: '', seller_username: '', seller_password: '', seller_name: '' }); setAdding(false); await load(); say('Organization created — give them the seller login and the rider join code') } catch (ex) { say(ex.message, 'err') } finally { setBusy(false) } }
   async function toggle(o) { try { await api.post(`/api/admin/orgs/${o.id}/active`, { active: !o.active }); await load(); say(o.active ? `${o.name} disabled — their logins stop working` : `${o.name} enabled`) } catch (ex) { say(ex.message, 'err') } }
+  async function remove(o) {
+    if (!confirm(`Delete "${o.name}" permanently?\n\nThis removes its ${o.sellers.length} dispatcher login(s), ${o.riders} rider(s), ${o.zones} zone(s) and ${o.stats.orders} order(s). Shared learning-store points are kept.\n\nTip: use Disable if you may need it again.`)) return
+    try { await api.del(`/api/admin/orgs/${o.id}`); await load(); say(`${o.name} deleted`) } catch (ex) { say(ex.message, 'err') }
+  }
   const copy = (t) => { navigator.clipboard?.writeText(t); say('Copied: ' + t) }
   const pct = (s) => s.orders ? Math.round(100 * s.found / s.orders) : 0
   const K = ({ v, l }) => <div className="kpi"><div className="v">{v ?? '–'}</div><div className="l">{l}</div></div>
@@ -32,7 +36,10 @@ export default function Orgs() {
       <div className="flex items-start gap-3">
         <span className={'w-11 h-11 rounded-xl grid place-items-center shrink-0 ' + (o.active ? 'bg-navy text-amber' : 'bg-ice-2 text-muted')}><Building2 size={22} /></span>
         <div className="min-w-0 flex-1"><div className="font-extrabold text-navy truncate">{o.name}</div><div className="text-xs text-muted capitalize">{o.type}{o.contact && ` · ${o.contact}`}</div></div>
-        <button onClick={() => toggle(o)} className={'btn px-3 py-1.5 text-xs ' + (o.active ? 'bg-green/12 text-green' : 'bg-red/12 text-red')}><Power size={14} /> {o.active ? 'Active' : 'Disabled'}</button>
+        <div className="flex items-center gap-1.5">
+          <button onClick={() => toggle(o)} className={'btn px-3 py-1.5 text-xs ' + (o.active ? 'bg-green/12 text-green' : 'bg-red/12 text-red')}><Power size={14} /> {o.active ? 'Active' : 'Disabled'}</button>
+          <button onClick={() => remove(o)} title="Delete organization" className="btn px-2.5 py-1.5 text-xs bg-white border border-line text-muted hover:text-red hover:border-red/40"><Trash2 size={14} /></button>
+        </div>
       </div>
       <div className="mt-4 grid grid-cols-4 gap-2 text-center">
         <div className="rounded-xl bg-ice p-2"><div className="font-extrabold text-navy">{o.stats.orders}</div><div className="text-[10px] uppercase font-semibold text-muted">orders</div></div>

@@ -290,6 +290,16 @@ def admin_org_active(oid: int, body: OrgActive, user=Depends(current_user)):
     need(user, 'admin'); DB.execute('UPDATE organizations SET active=? WHERE id=?', (1 if body.active else 0, oid)); DB.commit()
     return org_out(DB.execute('SELECT * FROM organizations WHERE id=?', (oid,)).fetchone())
 
+@app.delete('/api/admin/orgs/{oid}')
+def admin_delete_org(oid: int, user=Depends(current_user)):
+    """removes the organization with its users, zones and orders; shared learning-store points are kept (org reference cleared)"""
+    need(user, 'admin')
+    if not DB.execute('SELECT 1 FROM organizations WHERE id=?', (oid,)).fetchone(): raise HTTPException(404, 'organization not found')
+    for sql in ('DELETE FROM orders WHERE org_id=?', 'DELETE FROM zones WHERE org_id=?', 'DELETE FROM users WHERE org_id=?',
+                'UPDATE observations SET org_id=NULL WHERE org_id=?', 'DELETE FROM organizations WHERE id=?'):
+        DB.execute(sql, (oid,))
+    DB.commit(); return {'ok': True}
+
 @app.post('/api/admin/orgs/{oid}/users')
 def admin_add_user(oid: int, body: NewUser, user=Depends(current_user)):
     need(user, 'admin')
