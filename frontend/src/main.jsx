@@ -14,11 +14,12 @@ import Collect from './pages/Collect'
 import RiderShell from './pages/RiderShell'
 import RiderHome from './pages/RiderHome'
 import RiderOrder from './pages/RiderOrder'
+import Orgs from './pages/Orgs'
 
 function Home() {
   const u = auth.user()
   if (!u) return <Navigate to="/login" replace />
-  return <Navigate to={u.role === 'rider' ? '/rider' : '/app'} replace />
+  return <Navigate to={u.role === 'rider' ? '/rider' : (u.role === 'admin' ? '/app/orgs' : '/app')} replace />
 }
 function Guard({ roles, children }) {
   const u = auth.user()
@@ -34,7 +35,8 @@ const router = createBrowserRouter([
   { path: '/collect', element: <Collect standalone /> },
   { path: '/app', element: <Guard roles={['seller', 'admin']}><SellerShell /></Guard>, children: [
     { index: true, element: <Dashboard /> }, { path: 'orders', element: <Orders /> }, { path: 'zones', element: <Zones /> },
-    { path: 'learning', element: <Learning /> }, { path: 'collect', element: <Collect /> } ] },
+    { path: 'learning', element: <Learning /> }, { path: 'collect', element: <Collect /> },
+    { path: 'orgs', element: <Guard roles={['admin']}><Orgs /></Guard> } ] },
   { path: '/rider', element: <Guard roles={['rider']}><RiderShell /></Guard>, children: [
     { index: true, element: <RiderHome /> }, { path: ':id', element: <RiderOrder /> } ] },
   { path: '*', element: <Navigate to="/" replace /> },

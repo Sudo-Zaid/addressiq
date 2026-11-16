@@ -42,8 +42,25 @@ def from_xy(x, y, lat0, lon0):
     return (lat0 + y / 110540.0, lon0 + x / (111320.0 * math.cos(math.radians(lat0))))
 
 
+def ensure_fresh(path=GAZ):
+    """rebuild the gazetteer when normalise.py changed since it was built (keys must come from the same normaliser)"""
+    import hashlib, subprocess, sys
+    want = hashlib.sha1(open(os.path.join(os.path.dirname(__file__), 'normalise.py'), 'rb').read()).hexdigest()
+    have = None
+    if os.path.exists(path):
+        try:
+            db = sqlite3.connect(path); have = db.execute("SELECT value FROM meta WHERE key='normaliser_hash'").fetchone(); db.close()
+            have = have[0] if have else None
+        except sqlite3.Error:
+            have = None
+    if have != want and os.path.exists(os.path.join(ROOT, 'data', 'osm_raw.json')):
+        print('[gazetteer] normaliser changed -> rebuilding data/gazetteer.sqlite ...', flush=True)
+        subprocess.run([sys.executable, '-X', 'utf8', os.path.join(ROOT, 'scripts', 'build_gazetteer.py')], cwd=ROOT, check=True)
+
+
 class Gazetteer:
     def __init__(self, path=GAZ):
+        ensure_fresh(path)
         db = sqlite3.connect(path); db.row_factory = sqlite3.Row
         self.rows = [dict(r) for r in db.execute('SELECT * FROM place')]
         db.close()
@@ -229,11 +246,14 @@ class Geocoder:
             if city_row: return hav(r['lat'], r['lon'], city_row['lat'], city_row['lon']) <= 6000
             return True
         def anchor_term(r):
-            """+0.25 inside the stated area, +0.1 within 2 km of it (adjacent colonies), -0.1 beyond"""
+            """+0.25 inside the stated area, +0.1 within 2 km of it (adjacent colonies), -0.1 beyond;
+            the stated city breaks ties between same-named places (+0.05 within 6 km of the city centre)"""
+            city_term = 0.0
+            if city_row: city_term = 0.05 if hav(r['lat'], r['lon'], city_row['lat'], city_row['lon']) <= 6000 else -0.05
             if area:
-                if self.g.inside_area(area, r['lat'], r['lon']): return 0.25
-                return 0.1 if hav(r['lat'], r['lon'], area['lat'], area['lon']) <= 2000 else -0.1
-            if city_row: return 0.15 if hav(r['lat'], r['lon'], city_row['lat'], city_row['lon']) <= 6000 else -0.15
+                if self.g.inside_area(area, r['lat'], r['lon']): return 0.25 + city_term
+                return (0.1 if hav(r['lat'], r['lon'], area['lat'], area['lon']) <= 2000 else -0.1) + city_term
+            if city_row: return 0.15 if city_term > 0 else -0.15
             return 0.0
         # 2) street
         street = None; street_amb = []
@@ -250,7 +270,9 @@ class Geocoder:
         best = None; scored = []
         for lm in parts['landmarks']:
             specific = [w for w in lm['text'].split() if w not in GENERIC and not w.isdigit()]
-            if not specific:
+            if not specific and len(lm['text'].split()) < 3:
+                # "jamia masjid", "big plaza": names nothing in particular; 3+ generic words ("govt boys high school")
+                # are searched but must appear as a whole phrase inside a map name (see Gazetteer.search)
                 res['not_found'].append(lm['text'] + ' (generic)'); continue
             for s_name, r in self.g.search(lm['text'], ['landmark', 'area'], limit=8, cutoff=0.55):
                 total = 0.6 * s_name + anchor_term(r)

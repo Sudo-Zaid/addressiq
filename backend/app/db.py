@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-"""Application database (SQLite): users, zones, orders, learning-store observations, collection records."""
+"""Application database (SQLite): organizations, users, zones, orders, learning-store observations, collection records.
+Operational data (users, zones, orders) is scoped per organization; the learning store is SHARED across organizations
+(it holds only address text + GPS, never a name or phone)."""
 import hashlib, hmac, json, os, secrets, sqlite3, time, math
 from shapely.geometry import Point, Polygon
 
@@ -7,15 +9,17 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 PATH = os.path.join(ROOT, 'data', 'app.sqlite')
 
 SCHEMA = '''
+CREATE TABLE IF NOT EXISTS organizations(id INTEGER PRIMARY KEY, name TEXT, type TEXT, join_code TEXT UNIQUE, active INTEGER DEFAULT 1,
+    contact TEXT, created_at REAL);
 CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY, username TEXT UNIQUE, pw_hash TEXT, role TEXT, name TEXT, phone TEXT,
-    zone_id INTEGER, created_at REAL);
-CREATE TABLE IF NOT EXISTS zones(id INTEGER PRIMARY KEY, name TEXT, color TEXT, polygon TEXT, created_at REAL);
-CREATE TABLE IF NOT EXISTS orders(id INTEGER PRIMARY KEY, seller_id INTEGER, customer_name TEXT, phone TEXT, address_text TEXT, amount REAL,
+    zone_id INTEGER, org_id INTEGER, created_at REAL);
+CREATE TABLE IF NOT EXISTS zones(id INTEGER PRIMARY KEY, org_id INTEGER, name TEXT, color TEXT, polygon TEXT, created_at REAL);
+CREATE TABLE IF NOT EXISTS orders(id INTEGER PRIMARY KEY, org_id INTEGER, seller_id INTEGER, customer_name TEXT, phone TEXT, address_text TEXT, amount REAL,
     lat REAL, lon REAL, radius_m REAL, granularity TEXT, flag TEXT, explanation TEXT, result_json TEXT, premise_key TEXT,
     zone_id INTEGER, rider_id INTEGER, status TEXT, delivered_lat REAL, delivered_lon REAL, delivered_acc REAL, delivered_at REAL,
     corrected INTEGER DEFAULT 0, created_at REAL);
 CREATE TABLE IF NOT EXISTS observations(id INTEGER PRIMARY KEY, premise_key TEXT, address_text TEXT, lat REAL, lon REAL, accuracy REAL,
-    source TEXT, order_id INTEGER, rider_id INTEGER, trusted INTEGER, created_at REAL);
+    source TEXT, order_id INTEGER, rider_id INTEGER, org_id INTEGER, trusted INTEGER, created_at REAL);
 CREATE INDEX IF NOT EXISTS ix_obs_key ON observations(premise_key);
 CREATE TABLE IF NOT EXISTS collection(id INTEGER PRIMARY KEY, record_code TEXT, address_text TEXT, premise_type TEXT, city TEXT,
     lat REAL, lon REAL, accuracy REAL, drag_m REAL, consent_project INTEGER, consent_public INTEGER, status TEXT, created_at REAL);
@@ -24,7 +28,14 @@ CREATE TABLE IF NOT EXISTS collection(id INTEGER PRIMARY KEY, record_code TEXT, 
 def connect():
     os.makedirs(os.path.dirname(PATH), exist_ok=True)
     c = sqlite3.connect(PATH, check_same_thread=False); c.row_factory = sqlite3.Row
-    c.executescript(SCHEMA); return c
+    c.executescript(SCHEMA); migrate(c); return c
+
+def migrate(c):
+    """add columns introduced after the first prototype build (older app.sqlite files)"""
+    for table, col, ddl in [('users', 'org_id', 'INTEGER'), ('zones', 'org_id', 'INTEGER'), ('orders', 'org_id', 'INTEGER'), ('observations', 'org_id', 'INTEGER')]:
+        cols = [r[1] for r in c.execute('PRAGMA table_info(%s)' % table)]
+        if col not in cols: c.execute('ALTER TABLE %s ADD COLUMN %s %s' % (table, col, ddl))
+    c.commit()
 
 def hash_pw(pw, salt=None):
     salt = salt or secrets.token_hex(8)
@@ -36,7 +47,13 @@ def check_pw(pw, stored):
 
 def rows(cur): return [dict(r) for r in cur.fetchall()]
 
-# ----------------------------------------------------------------------------- learning store (used by the geocoder)
+def new_join_code(db, name):
+    base = ''.join(ch for ch in name.upper() if ch.isalpha())[:3] or 'ORG'
+    while True:
+        code = '%s-%04d' % (base, secrets.randbelow(10000))
+        if not db.execute('SELECT 1 FROM organizations WHERE join_code=?', (code,)).fetchone(): return code
+
+# ----------------------------------------------------------------------------- learning store (SHARED across organizations)
 class Store:
     def __init__(self, db): self.db = db
     def premise(self, key):
@@ -64,10 +81,10 @@ def _hav(lat1, lon1, lat2, lon2):
     a = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
     return 2 * 6371000 * math.asin(math.sqrt(a))
 
-# ----------------------------------------------------------------------------- zones
-def zone_for(db, lat, lon):
+# ----------------------------------------------------------------------------- zones (per organization)
+def zone_for(db, lat, lon, org_id):
     if lat is None: return None
-    for z in rows(db.execute('SELECT * FROM zones')):
+    for z in rows(db.execute('SELECT * FROM zones WHERE org_id=?', (org_id,))):
         ring = json.loads(z['polygon'])
         if len(ring) >= 3 and Polygon([(p[1], p[0]) for p in ring]).contains(Point(lon, lat)): return z
     return None
@@ -82,35 +99,54 @@ def pick_rider(db, zone_id):
     return best
 
 # ----------------------------------------------------------------------------- seed
-def circle_poly(lat, lon, r_m, n=14):
+def circle_poly(lat, lon, r_m, n=28):
     out = []
     for i in range(n):
         a = 2 * math.pi * i / n
         out.append([lat + (r_m * math.cos(a)) / 110540.0, lon + (r_m * math.sin(a)) / (111320.0 * math.cos(math.radians(lat)))])
     return out
 
+def add_org(db, name, type_, contact=''):
+    cur = db.execute('INSERT INTO organizations(name,type,join_code,active,contact,created_at) VALUES (?,?,?,?,?,?)',
+                     (name, type_, new_join_code(db, name), 1, contact, time.time()))
+    return cur.lastrowid
+
+def add_user(db, username, pw, role, name, phone='', zone_id=None, org_id=None):
+    cur = db.execute('INSERT INTO users(username,pw_hash,role,name,phone,zone_id,org_id,created_at) VALUES (?,?,?,?,?,?,?,?)',
+                     (username.lower(), hash_pw(pw), role, name, phone, zone_id, org_id, time.time()))
+    return cur.lastrowid
+
+def add_zone(db, org_id, name, color, lat, lon, r):
+    cur = db.execute('INSERT INTO zones(org_id,name,color,polygon,created_at) VALUES (?,?,?,?,?)', (org_id, name, color, json.dumps(circle_poly(lat, lon, r)), time.time()))
+    return cur.lastrowid
+
 def seed(db, gaz):
-    if db.execute('SELECT COUNT(*) FROM users').fetchone()[0]: return
-    now = time.time()
+    if db.execute('SELECT COUNT(*) FROM organizations').fetchone()[0]:
+        return
     def find(name, kinds=('area', 'town')):
         hits = gaz.search(name, list(kinds), limit=1, cutoff=0.6)
         return (hits[0][1]['lat'], hits[0][1]['lon']) if hits else None
-    # demo zones: city centre (Machine Mohalla, Model Colony, bazaar), Satellite Town / Citi Housing, Cantt & GT Road south, Dina
-    zones = [('Jhelum City', '#1F3864', (32.936, 73.722), 2600),
-             ('Satellite Town / Citi Housing', '#3C8D5A', (32.993, 73.660), 2000),
-             ('Cantt / Bilal Town', '#8E44AD', (32.903, 73.742), 2300),
-             ('Dina', '#E8A33D', find('dina') or (33.0279, 73.6011), 2600)]
-    zid = {}
-    for name, color, (lat, lon), r in zones:
-        cur = db.execute('INSERT INTO zones(name,color,polygon,created_at) VALUES (?,?,?,?)', (name, color, json.dumps(circle_poly(lat, lon, r, n=28)), now))
-        zid[name] = cur.lastrowid
-    users = [('seller', 'seller123', 'seller', 'Zaid Traders (seller)', '0313-0000000', None),
-             ('admin', 'admin123', 'admin', 'AddressIQ Admin', '', None),
-             ('ahmed', 'rider123', 'rider', 'Ahmed Raza', '0300-1111111', zid['Jhelum City']),
-             ('bilal', 'rider123', 'rider', 'Bilal Hussain', '0300-2222222', zid['Satellite Town / Citi Housing']),
-             ('faisal', 'rider123', 'rider', 'Faisal Mehmood', '0300-5555555', zid['Cantt / Bilal Town']),
-             ('usman', 'rider123', 'rider', 'Usman Ali', '0300-3333333', zid['Dina']),
-             ('hamza', 'rider123', 'rider', 'Hamza Khan', '0300-4444444', None)]
-    for u, pw, role, name, phone, z in users:
-        db.execute('INSERT INTO users(username,pw_hash,role,name,phone,zone_id,created_at) VALUES (?,?,?,?,?,?,?)', (u, hash_pw(pw), role, name, phone, z, now))
+    # platform admin (no organization)
+    if not db.execute("SELECT 1 FROM users WHERE username='admin'").fetchone():
+        add_user(db, 'admin', 'admin123', 'admin', 'AddressIQ Platform Admin')
+    # org 1: the demo seller with four zones and four riders
+    o1 = add_org(db, 'Zaid Traders', 'shop', 'info@zaidtraders.pk')
+    z = {'Jhelum City': add_zone(db, o1, 'Jhelum City', '#1F3864', 32.936, 73.722, 2600),
+         'Satellite Town / Citi Housing': add_zone(db, o1, 'Satellite Town / Citi Housing', '#3C8D5A', 32.993, 73.660, 2000),
+         'Cantt / Bilal Town': add_zone(db, o1, 'Cantt / Bilal Town', '#8E44AD', 32.903, 73.742, 2300),
+         'Dina': add_zone(db, o1, 'Dina', '#E8A33D', *(find('dina') or (33.0279, 73.6011)), 2600)}
+    add_user(db, 'seller', 'seller123', 'seller', 'Zaid Traders (dispatcher)', '0313-0000000', None, o1)
+    add_user(db, 'ahmed', 'rider123', 'rider', 'Ahmed Raza', '0300-1111111', z['Jhelum City'], o1)
+    add_user(db, 'bilal', 'rider123', 'rider', 'Bilal Hussain', '0300-2222222', z['Satellite Town / Citi Housing'], o1)
+    add_user(db, 'faisal', 'rider123', 'rider', 'Faisal Mehmood', '0300-5555555', z['Cantt / Bilal Town'], o1)
+    add_user(db, 'usman', 'rider123', 'rider', 'Usman Ali', '0300-3333333', z['Dina'], o1)
+    add_user(db, 'hamza', 'rider123', 'rider', 'Hamza Khan', '0300-4444444', None, o1)
+    # org 2: a courier company with one city-wide zone and one rider
+    o2 = add_org(db, 'Leopard Courier (Jhelum branch)', 'courier', 'jhelum@leopard.pk')
+    z2 = add_zone(db, o2, 'Jhelum + Dina', '#0E7490', 32.97, 73.68, 7000)
+    add_user(db, 'leopard', 'leopard123', 'seller', 'Leopard Jhelum desk', '0544-000000', None, o2)
+    add_user(db, 'tariq', 'rider123', 'rider', 'Tariq (Leopard)', '0300-6666666', z2, o2)
+    # org 3: a restaurant, created but not set up yet (no zones, no riders)
+    o3 = add_org(db, 'Chaaye Khaana', 'restaurant', '')
+    add_user(db, 'chaaye', 'chaaye123', 'seller', 'Chaaye Khaana (orders desk)', '', None, o3)
     db.commit()

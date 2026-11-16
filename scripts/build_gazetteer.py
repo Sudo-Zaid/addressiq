@@ -64,6 +64,10 @@ CREATE VIRTUAL TABLE place_fts USING fts5(norm, content='place', content_rowid='
 ''')
 db.executemany('INSERT INTO place(osm_type,osm_id,kind,category,name,norm,phon,lat,lon,geom,primary_name) VALUES (?,?,?,?,?,?,?,?,?,?,?)', rows)
 db.execute("INSERT INTO place_fts(place_fts) VALUES('rebuild')")
+# remember which normaliser produced these keys, so the API can detect a stale gazetteer after normalise.py changes
+import hashlib
+db.execute('CREATE TABLE IF NOT EXISTS meta(key TEXT PRIMARY KEY, value TEXT)')
+db.execute('INSERT OR REPLACE INTO meta VALUES (?,?)', ('normaliser_hash', hashlib.sha1(open(os.path.join(os.path.dirname(__file__), '..', 'backend', 'app', 'normalise.py'), 'rb').read()).hexdigest()))
 db.commit()
 print('rows:', len(rows))
 for kind, n in db.execute('SELECT kind, COUNT(*) FROM place WHERE primary_name=1 GROUP BY kind ORDER BY 2 DESC'): print('  %-9s %d' % (kind, n))

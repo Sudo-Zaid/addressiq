@@ -2,15 +2,16 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { api, auth } from '../api'
 import { Logo, Spinner } from '../components/ui'
-import { MapPin, Store, Bike } from 'lucide-react'
+import { MapPin, Store, Bike, Shield, Truck } from 'lucide-react'
 
-const DEMO = [{ u: 'seller', p: 'seller123', label: 'Seller / dispatcher', icon: Store }, { u: 'ahmed', p: 'rider123', label: 'Rider (Machine Mohalla)', icon: Bike }, { u: 'bilal', p: 'rider123', label: 'Rider (Satellite Town)', icon: Bike }]
+const DEMO = [{ u: 'admin', p: 'admin123', label: 'Platform admin', icon: Shield }, { u: 'seller', p: 'seller123', label: 'Dispatcher — Zaid Traders', icon: Store },
+  { u: 'leopard', p: 'leopard123', label: 'Dispatcher — Leopard Courier', icon: Truck }, { u: 'ahmed', p: 'rider123', label: 'Rider — Ahmed (Jhelum City)', icon: Bike }]
 
 export default function Login() {
   const nav = useNavigate(); const [u, setU] = useState(''); const [p, setP] = useState(''); const [err, setErr] = useState(''); const [busy, setBusy] = useState(false)
   async function go(e, uu = u, pp = p) {
     e?.preventDefault(); setBusy(true); setErr('')
-    try { const r = await api.post('/api/auth/login', { username: uu, password: pp }); auth.set(r.token, r.user); nav(r.user.role === 'rider' ? '/rider' : '/app') }
+    try { const r = await api.post('/api/auth/login', { username: uu, password: pp }); auth.set(r.token, r.user); nav(r.user.role === 'rider' ? '/rider' : (r.user.role === 'admin' ? '/app/orgs' : '/app')) }
     catch (ex) { setErr(ex.message) } finally { setBusy(false) }
   }
   return <div className="min-h-full grid lg:grid-cols-2">
