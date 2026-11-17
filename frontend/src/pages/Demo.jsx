@@ -94,7 +94,7 @@ export default function Demo() {
   return <div className="grid xl:grid-cols-[440px_1fr] gap-5 h-full min-h-[600px]">
     <div className="flex flex-col gap-4 min-w-0">
       <div className="card p-4">
-        <div className="flex items-center gap-2 text-navy font-extrabold"><Sparkles size={18} className="text-amber" /> Watch it think</div>
+        <div className="flex items-center gap-2 text-bright font-extrabold"><Sparkles size={18} className="text-amber" /> Watch it think</div>
         <p className="text-xs text-muted mt-1">Type an address the way people say it — or press the mic and <b>speak it in Urdu</b>.</p>
         <div className="mt-3 flex gap-2">
           <input className="input" value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === 'Enter' && run()} placeholder='e.g. "Jamia Masjid ke peeche, Islampura"' />
@@ -108,18 +108,18 @@ export default function Demo() {
       <div className="card p-4 flex-1">
         <ol className="space-y-1">{STEPS.map((s, i) => {
           const n = i + 1, on = step >= n, cur = step === n
-          return <li key={i} className={'flex items-start gap-3 rounded-xl px-3 py-2.5 transition ' + (cur ? 'bg-navy text-white shadow-card' : on ? 'bg-ice' : 'opacity-45')}>
-            <span className={'mt-0.5 w-7 h-7 rounded-full grid place-items-center shrink-0 ' + (cur ? 'bg-amber text-navy' : on ? 'bg-green text-white' : 'bg-ice-2 text-muted')}>{on && !cur ? <Check size={15} /> : <s.icon size={15} />}</span>
-            <div className="min-w-0"><div className={'text-sm font-bold ' + (cur ? '' : 'text-navy')}>{s.title}</div>
+          return <li key={i} className={'flex items-start gap-3 rounded-xl px-3 py-2.5 transition ' + (cur ? 'step-cur' : on ? 'bg-ice' : 'opacity-45')}>
+            <span className={'mt-0.5 w-7 h-7 rounded-full grid place-items-center shrink-0 ' + (cur ? 'bg-amber text-bright' : on ? 'bg-green text-white' : 'bg-ice-2 text-muted')}>{on && !cur ? <Check size={15} /> : <s.icon size={15} />}</span>
+            <div className="min-w-0"><div className={'text-sm font-bold ' + (cur ? '' : 'text-bright')}>{s.title}</div>
               <div className={'text-xs ' + (cur ? 'text-white/75' : 'text-muted')}>{s.sub}</div>
-              {n === 1 && on && r && <div className="mt-1.5 text-xs font-mono rounded-lg bg-white/90 text-ink px-2 py-1.5 border border-line">{(p?.segments || []).join('  ·  ')}</div>}
+              {n === 1 && on && r && <div className="mt-1.5 text-xs font-mono rounded-lg bg-deep/70 text-sky px-2 py-1.5 border border-line">{(p?.segments || []).join('  ·  ')}</div>}
               {n === 2 && on && chips.length > 0 && <div className="mt-1.5 flex flex-wrap gap-1">{chips.map(([t, c], j) => <span key={j} className="text-[11px] font-bold rounded-full px-2 py-0.5 text-white" style={{ background: c }}>{t}</span>)}</div>}
               {n === 3 && on && r && <div className={'mt-1 text-xs ' + (cur ? 'text-white/85' : 'text-muted')}>{memory ? 'skipped — answered straight from delivery memory' : (r.candidates?.length ? `${r.candidates.length} candidate place(s) found` : 'nothing matched on the map')}{!memory && r.matched?.area && ` · area: ${r.matched.area.name}`}</div>}
               {n === 4 && on && r && <div className={'mt-1 text-xs ' + (cur ? 'text-white/85' : 'text-muted')}>{memory ? 'skipped — the exact door is already known' : (r.band ? `"${r.band.relation}" → ${r.band.dmin}–${r.band.dmax} m ${r.band.word} ${r.band.landmark_name}` : 'no relation word in this address')}</div>}
             </div></li>
         })}</ol>
         {step >= 5 && r && <div className={'mt-3 rounded-xl border p-3 ' + (memory ? 'border-amber bg-amber/10' : 'border-line bg-ice')}>
-          <div className="flex items-center gap-2 flex-wrap">{memory && <span className="chip bg-amber text-navy"><Brain size={12} /> Memory</span>}<Chip flag={r.flag} />{r.lat != null && <span className="text-xs text-muted">{r.granularity} · within {Math.round(r.radius_m)} m</span>}</div>
+          <div className="flex items-center gap-2 flex-wrap">{memory && <span className="chip bg-amber text-bright"><Brain size={12} /> Memory</span>}<Chip flag={r.flag} />{r.lat != null && <span className="text-xs text-muted">{r.granularity} · within {Math.round(r.radius_m)} m</span>}</div>
           <p className="mt-2 text-sm min-h-[40px]">{typed}<span className="animate-pulse">▌</span></p>
           {r.not_found?.length > 0 && <div className="text-xs text-red mt-1">Not on the map: {r.not_found.join(', ')}</div>}
           <div className="mt-2 flex gap-2"><button className="btn-ghost px-3 py-1.5 text-xs" onClick={() => play(r)}><RotateCcw size={13} /> Replay</button>

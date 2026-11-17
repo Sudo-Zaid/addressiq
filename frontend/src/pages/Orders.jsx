@@ -58,9 +58,9 @@ export default function Orders() {
     </div>
     <div className="flex flex-col gap-4 min-h-[500px]">
       <div className="card p-2 h-[360px] xl:h-auto xl:flex-1 xl:min-h-[320px]"><MapView markers={markers} zones={zones} onMarkerClick={(id) => setSel(Number(id))} onMarkerDrag={(id, p) => { if (Number(id) === fixing) setFixPos(p) }} onClick={(p) => { if (fixing) setFixPos(p) }} fit={fixing ? null : (sel ? 'selected' : 'markers')} /></div>
-      {fixing && <div className="card p-3 text-sm bg-blue-50 border-blue-200"><b>Fix pin:</b> drag the blue pin (or click the map) to where the customer actually is, then press ✓. The address is saved to the learning store.</div>}
+      {fixing && <div className="card p-3 text-sm border-sky/40 text-ink"><b>Fix pin:</b> drag the blue pin (or click the map) to where the customer actually is, then press ✓. The address is saved to the learning store.</div>}
       {cur && <div className="card p-4 text-sm">
-        <div className="flex items-start gap-2"><MapPinned size={18} className="text-navy mt-0.5" /><div className="min-w-0"><div className="font-bold text-navy">{cur.customer_name}</div><div className="text-muted">{cur.address_text}</div></div><div className="ml-auto"><Chip flag={cur.flag} /></div></div>
+        <div className="flex items-start gap-2"><MapPinned size={18} className="text-bright mt-0.5" /><div className="min-w-0"><div className="font-bold text-bright">{cur.customer_name}</div><div className="text-muted">{cur.address_text}</div></div><div className="ml-auto"><Chip flag={cur.flag} /></div></div>
         <p className="mt-3">{cur.explanation}</p>
         {cur.result?.matched && Object.keys(cur.result.matched).length > 0 && <div className="mt-3 grid gap-1 text-xs">
           {cur.result.matched.landmark && <div><span className="label inline mr-2">Landmark</span>{cur.result.matched.landmark.name}{cur.result.matched.landmark.relation && <span className="text-muted"> · "{cur.result.matched.landmark.relation}"</span>}</div>}
@@ -69,7 +69,7 @@ export default function Orders() {
           {cur.result.matched.premise_observations && <div><span className="label inline mr-2">Learned</span>from {cur.result.matched.premise_observations} earlier deliveries</div>}
         </div>}
         {cur.result?.not_found?.length > 0 && <div className="mt-2 text-xs text-red">Not on the map: {cur.result.not_found.join(', ')}</div>}
-        {cur.result?.candidates?.length > 1 && <details className="mt-3"><summary className="text-xs font-semibold text-navy cursor-pointer">Other candidates ({cur.result.candidates.length - 1})</summary>
+        {cur.result?.candidates?.length > 1 && <details className="mt-3"><summary className="text-xs font-semibold text-bright cursor-pointer">Other candidates ({cur.result.candidates.length - 1})</summary>
           <ul className="mt-1 text-xs text-muted">{cur.result.candidates.slice(1, 5).map((c, i) => <li key={i}>{c.name} <span className="opacity-70">({c.category}) score {c.score}</span></li>)}</ul></details>}
       </div>}
     </div>

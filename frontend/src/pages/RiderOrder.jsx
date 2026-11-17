@@ -19,11 +19,11 @@ export default function RiderOrder() {
       () => { say('GPS not available here (needs HTTPS on phones) — saving the pin location instead', 'err'); post(o.lat ?? 32.9247, o.lon ?? 73.7194, null) }, { enableHighAccuracy: true, timeout: 12000 })
   }
   return <div className="space-y-4">
-    <Link to="/rider" className="inline-flex items-center gap-1 text-sm font-semibold text-navy"><ArrowLeft size={16} /> My stops</Link>
-    <div className="card p-4"><div className="flex items-start gap-3"><div className="min-w-0 flex-1"><div className="font-extrabold text-lg text-navy">{o.customer_name}</div><div className="text-sm text-muted">{o.address_text}</div></div><div className="text-right"><div className="font-extrabold text-navy">{fmtMoney(o.amount)}</div><div className="text-[11px] text-muted">cash on delivery</div></div></div>
+    <Link to="/rider" className="inline-flex items-center gap-1 text-sm font-semibold text-bright"><ArrowLeft size={16} /> My stops</Link>
+    <div className="card p-4"><div className="flex items-start gap-3"><div className="min-w-0 flex-1"><div className="font-extrabold text-lg text-bright">{o.customer_name}</div><div className="text-sm text-muted">{o.address_text}</div></div><div className="text-right"><div className="font-extrabold text-bright">{fmtMoney(o.amount)}</div><div className="text-[11px] text-muted">cash on delivery</div></div></div>
       <div className="mt-3 flex items-center gap-2 flex-wrap"><Chip flag={o.flag} /><span className="text-xs text-muted">{f.hint}{o.lat != null && ` · within ${Math.round(o.radius_m)} m`}</span></div></div>
     <div className="card p-1.5 h-[300px]"><MapView markers={o.lat != null ? [{ id: 'o', lat: o.lat, lon: o.lon, color: f.color, radius: o.radius_m, selected: true, alternatives: o.result?.alternatives || [] }] : []} me={me} zoom={14} /></div>
-    <div className="card p-4 text-sm"><div className="flex items-start gap-2"><MapPin size={16} className="text-navy mt-0.5 shrink-0" /><span>{o.explanation}</span></div>
+    <div className="card p-4 text-sm"><div className="flex items-start gap-2"><MapPin size={16} className="text-bright mt-0.5 shrink-0" /><span>{o.explanation}</span></div>
       {o.result?.matched?.landmark && <div className="mt-2 text-xs text-muted">Landmark: <b className="text-ink">{o.result.matched.landmark.name}</b>{o.result.matched.landmark.relation && ` · "${o.result.matched.landmark.relation}"`}</div>}
       {o.result?.alternatives?.length > 0 && <div className="mt-2 text-xs text-muted">Other option: <b className="text-ink">{o.result.alternatives[0].name}</b> (dashed line on the map)</div>}</div>
     {o.status === 'delivered' ? <div className="card p-4 bg-green/10 border-green/30 flex items-center gap-3 text-green font-bold"><CheckCircle2 /> Delivered{o.delivered_acc != null && <span className="text-xs font-semibold ml-auto">GPS ±{Math.round(o.delivered_acc)} m saved</span>}</div> :

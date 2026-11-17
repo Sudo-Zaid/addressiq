@@ -8,15 +8,15 @@ export function StatusChip({ s }) {
 }
 export function Logo({ light = false, size = 'md' }) {
   const sz = size === 'lg' ? 'text-2xl' : 'text-lg'
-  return <div className={'flex items-center gap-2 font-extrabold tracking-tight ' + sz + (light ? ' text-white' : ' text-navy')}>
+  return <div className={'flex items-center gap-2 font-extrabold tracking-tight ' + sz + (light ? ' text-white' : ' text-bright')}>
     <span className={'grid place-items-center rounded-xl ' + (light ? 'bg-white/15' : 'bg-navy') + ' w-9 h-9'}><MapPin size={20} className={light ? 'text-amber' : 'text-amber'} /></span>
     Address<span className="text-amber">IQ</span>
   </div>
 }
 export function Empty({ icon: Icon, title, text, action }) {
   return <div className="flex flex-col items-center justify-center text-center py-14 px-6 gap-3">
-    {Icon && <div className="w-14 h-14 rounded-2xl bg-ice-2 grid place-items-center text-navy"><Icon size={26} /></div>}
-    <div className="font-bold text-navy">{title}</div>{text && <div className="text-sm text-muted max-w-md">{text}</div>}{action}
+    {Icon && <div className="w-14 h-14 rounded-2xl bg-ice-2 grid place-items-center text-bright"><Icon size={26} /></div>}
+    <div className="font-bold text-bright">{title}</div>{text && <div className="text-sm text-muted max-w-md">{text}</div>}{action}
   </div>
 }
 export function Spinner() { return <span className="inline-block w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> }

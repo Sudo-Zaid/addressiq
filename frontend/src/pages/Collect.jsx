@@ -21,7 +21,7 @@ export default function Collect({ standalone = false }) {
     e.preventDefault(); if (!pin) return say('Capture GPS or click the map first', 'err'); setBusy(true)
     try { const r = await api.post('/api/collect', { ...f, lat: pin.lat, lon: pin.lon, accuracy: gps?.acc ?? null, drag_m: drag }); setDone(r) } catch (ex) { say(ex.message, 'err') } finally { setBusy(false) }
   }
-  const body = done ? <div className="card p-8 text-center"><div className="text-5xl">✅</div><h2 className="text-xl font-extrabold text-navy mt-3">Saved — thank you!</h2><p className="text-sm text-muted mt-1">Record code <b className="text-navy">{done.record_code}</b> · status <b>{done.status}</b>{done.status !== 'AUTO' && ' (the team will verify it)'}</p>
+  const body = done ? <div className="card p-8 text-center"><div className="text-5xl">✅</div><h2 className="text-xl font-extrabold text-bright mt-3">Saved — thank you!</h2><p className="text-sm text-muted mt-1">Record code <b className="text-bright">{done.record_code}</b> · status <b>{done.status}</b>{done.status !== 'AUTO' && ' (the team will verify it)'}</p>
     <button className="btn-primary mt-5" onClick={() => { setDone(null); setGps(null); setPin(null); setF({ ...f, address_text: '' }) }}>Add another address</button></div> :
     <form onSubmit={submit} className="grid lg:grid-cols-2 gap-5">
       <div className="card p-5 space-y-4">
@@ -42,7 +42,7 @@ export default function Collect({ standalone = false }) {
       </div>
       <div className="card p-2 h-[380px] lg:h-auto lg:min-h-[380px]"><MapView markers={pin ? [{ id: 'p', lat: pin.lat, lon: pin.lon, color: '#1F3864', draggable: true, radius: gps?.acc || 0 }] : []} center={JHELUM} zoom={13} fit={pin ? 'markers' : null} onClick={(p) => setPin(p)} onMarkerDrag={(_, p) => setPin(p)} /></div>
     </form>
-  if (!standalone) return <div className="grid gap-4"><div className="text-sm text-muted">Volunteer data-collection form (module M1). Stand at the gate or shop front, type the address the way people say it, capture GPS, save. Shareable link: <Link to="/collect" className="text-navy font-semibold">/collect</Link></div>{body}<Toast msg={toast?.msg} kind={toast?.kind} /></div>
-  return <div className="min-h-full p-4 lg:p-8 max-w-5xl mx-auto"><div className="flex items-center justify-between mb-5"><Logo /><Link to="/login" className="text-sm font-semibold text-navy">Sign in</Link></div>
-    <h1 className="text-2xl font-extrabold text-navy">Help us map Jhelum's addresses</h1><p className="text-sm text-muted mt-1 mb-5">One minute: type the address the way you would tell a rider, press "Capture GPS" while standing at the gate, save.</p>{body}<Toast msg={toast?.msg} kind={toast?.kind} /></div>
+  if (!standalone) return <div className="grid gap-4"><div className="text-sm text-muted">Volunteer data-collection form (module M1). Stand at the gate or shop front, type the address the way people say it, capture GPS, save. Shareable link: <Link to="/collect" className="text-bright font-semibold">/collect</Link></div>{body}<Toast msg={toast?.msg} kind={toast?.kind} /></div>
+  return <div className="min-h-full p-4 lg:p-8 max-w-5xl mx-auto"><div className="flex items-center justify-between mb-5"><Logo /><Link to="/login" className="text-sm font-semibold text-bright">Sign in</Link></div>
+    <h1 className="text-2xl font-extrabold text-bright">Help us map Jhelum's addresses</h1><p className="text-sm text-muted mt-1 mb-5">One minute: type the address the way you would tell a rider, press "Capture GPS" while standing at the gate, save.</p>{body}<Toast msg={toast?.msg} kind={toast?.kind} /></div>
 }

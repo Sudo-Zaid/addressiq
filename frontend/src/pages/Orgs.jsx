@@ -22,8 +22,8 @@ export default function Orgs() {
   const K = ({ v, l }) => <div className="kpi"><div className="v">{v ?? '–'}</div><div className="l">{l}</div></div>
   return <div className="grid gap-5">
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3"><K v={stats?.organizations} l="Active organizations" /><K v={stats?.orders} l="Orders (all)" /><K v={stats?.delivered} l="Delivered (all)" /><K v={stats?.premises_learned} l="Addresses learned (shared)" /></div>
-    <div className="card p-4 text-sm flex items-start gap-3"><Brain className="text-navy shrink-0 mt-0.5" size={18} /><div><b className="text-navy">One map, many organizations.</b> Each organization has its own logins, zones, riders and orders — nobody sees another company's data. The learning store is <b>shared</b>: a delivery confirmed by Leopard Courier makes the same address exact for Chaaye Khaana tomorrow. It holds only address text and a GPS point, never a name or phone.</div></div>
-    <div className="flex items-center gap-2"><h3 className="font-bold text-navy text-lg">Organizations</h3><button className="btn-primary ml-auto" onClick={() => setAdding(a => !a)}><Plus size={16} /> Add organization</button></div>
+    <div className="card p-4 text-sm flex items-start gap-3"><Brain className="text-bright shrink-0 mt-0.5" size={18} /><div><b className="text-bright">One map, many organizations.</b> Each organization has its own logins, zones, riders and orders — nobody sees another company's data. The learning store is <b>shared</b>: a delivery confirmed by Leopard Courier makes the same address exact for Chaaye Khaana tomorrow. It holds only address text and a GPS point, never a name or phone.</div></div>
+    <div className="flex items-center gap-2"><h3 className="font-bold text-bright text-lg">Organizations</h3><button className="btn-primary ml-auto" onClick={() => setAdding(a => !a)}><Plus size={16} /> Add organization</button></div>
     {adding && <form onSubmit={add} className="card p-4 grid md:grid-cols-3 gap-3 items-end">
       <div><label className="label">Organization name</label><input className="input" value={f.name} onChange={e => setF({ ...f, name: e.target.value })} required placeholder="e.g. TCS Jhelum" /></div>
       <div><label className="label">Type</label><select className="input" value={f.type} onChange={e => setF({ ...f, type: e.target.value })}>{TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></div>
@@ -35,21 +35,21 @@ export default function Orgs() {
     <div className="grid lg:grid-cols-2 gap-4">{orgs.map(o => <div key={o.id} className={'card p-4 ' + (o.active ? '' : 'opacity-60')}>
       <div className="flex items-start gap-3">
         <span className={'w-11 h-11 rounded-xl grid place-items-center shrink-0 ' + (o.active ? 'bg-navy text-amber' : 'bg-ice-2 text-muted')}><Building2 size={22} /></span>
-        <div className="min-w-0 flex-1"><div className="font-extrabold text-navy truncate">{o.name}</div><div className="text-xs text-muted capitalize">{o.type}{o.contact && ` · ${o.contact}`}</div></div>
+        <div className="min-w-0 flex-1"><div className="font-extrabold text-bright truncate">{o.name}</div><div className="text-xs text-muted capitalize">{o.type}{o.contact && ` · ${o.contact}`}</div></div>
         <div className="flex items-center gap-1.5">
           <button onClick={() => toggle(o)} className={'btn px-3 py-1.5 text-xs ' + (o.active ? 'bg-green/12 text-green' : 'bg-red/12 text-red')}><Power size={14} /> {o.active ? 'Active' : 'Disabled'}</button>
-          <button onClick={() => remove(o)} title="Delete organization" className="btn px-2.5 py-1.5 text-xs bg-white border border-line text-muted hover:text-red hover:border-red/40"><Trash2 size={14} /></button>
+          <button onClick={() => remove(o)} title="Delete organization" className="btn-ghost px-2.5 py-1.5 text-xs text-muted hover:text-red"><Trash2 size={14} /></button>
         </div>
       </div>
       <div className="mt-4 grid grid-cols-4 gap-2 text-center">
-        <div className="rounded-xl bg-ice p-2"><div className="font-extrabold text-navy">{o.stats.orders}</div><div className="text-[10px] uppercase font-semibold text-muted">orders</div></div>
+        <div className="rounded-xl bg-ice p-2"><div className="font-extrabold text-bright">{o.stats.orders}</div><div className="text-[10px] uppercase font-semibold text-muted">orders</div></div>
         <div className="rounded-xl bg-ice p-2"><div className="font-extrabold text-green">{pct(o.stats)}%</div><div className="text-[10px] uppercase font-semibold text-muted">found</div></div>
-        <div className="rounded-xl bg-ice p-2"><div className="font-extrabold text-navy">{o.riders}</div><div className="text-[10px] uppercase font-semibold text-muted">riders</div></div>
-        <div className="rounded-xl bg-ice p-2"><div className="font-extrabold text-navy">{o.zones}</div><div className="text-[10px] uppercase font-semibold text-muted">zones</div></div>
+        <div className="rounded-xl bg-ice p-2"><div className="font-extrabold text-bright">{o.riders}</div><div className="text-[10px] uppercase font-semibold text-muted">riders</div></div>
+        <div className="rounded-xl bg-ice p-2"><div className="font-extrabold text-bright">{o.zones}</div><div className="text-[10px] uppercase font-semibold text-muted">zones</div></div>
       </div>
       <div className="mt-3 text-xs text-muted flex flex-wrap gap-x-4 gap-y-1">
         <span><Users size={12} className="inline mr-1" />Dispatcher: {o.sellers.map(s => <b key={s.id} className="text-ink">{s.username}</b>).reduce((a, b) => a === null ? [b] : [...a, ', ', b], null) || '—'}</span>
-        <span><Bike size={12} className="inline mr-1" />Rider join code: <b className="text-ink">{o.join_code}</b> <button className="text-navy-3 font-semibold" onClick={() => copy(o.join_code)}><Copy size={12} className="inline" /></button></span>
+        <span><Bike size={12} className="inline mr-1" />Rider join code: <b className="text-ink">{o.join_code}</b> <button className="text-sky font-semibold" onClick={() => copy(o.join_code)}><Copy size={12} className="inline" /></button></span>
         <span><Package size={12} className="inline mr-1" />{o.stats.delivered} delivered · <Map size={12} className="inline mx-1" />{o.contributed} confirmations shared</span>
       </div>
     </div>)}</div>

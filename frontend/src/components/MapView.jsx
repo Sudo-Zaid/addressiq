@@ -1,12 +1,13 @@
 import { useEffect, useRef } from 'react'
 import * as maplibregl from 'maplibre-gl'
 
-const STYLE = 'https://tiles.openfreemap.org/styles/liberty'
-const FALLBACK = {
-  version: 8,
-  sources: { osm: { type: 'raster', tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], tileSize: 256, attribution: '© OpenStreetMap contributors' } },
-  layers: [{ id: 'osm', type: 'raster', source: 'osm' }],
-}
+// keyless raster basemaps — Esri dark/light gray canvas (no API key, reliable)
+const raster = (urls, attr) => ({ version: 8, glyphs: 'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf', sources: { b: { type: 'raster', tiles: urls, tileSize: 256, attribution: attr } }, layers: [{ id: 'b', type: 'raster', source: 'b' }] })
+const DARK = raster(['https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}'], '© Esri · © OpenStreetMap contributors')
+const LIGHT = raster(['https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}'], '© Esri · © OpenStreetMap contributors')
+const OSM = raster(['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], '© OpenStreetMap contributors')
+export const isLight = () => document.documentElement.classList.contains('light')
+export const mapStyle = () => (isLight() ? LIGHT : DARK)
 export const JHELUM = [73.7194, 32.9247]
 
 function circle([lon, lat], r, n = 48) {
@@ -29,16 +30,15 @@ export default function MapView({ markers = [], zones = [], bands = [], draw = n
   cb.current = { onClick, onMarkerClick, onMarkerDrag }
 
   useEffect(() => {
-    const m = new maplibregl.Map({ container: el.current, style: STYLE, center, zoom, attributionControl: { compact: true } })
+    const m = new maplibregl.Map({ container: el.current, style: mapStyle(), center, zoom, attributionControl: { compact: true } })
     m.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
-    m.on('error', (e) => { if (!ready.current && /style|tiles\.openfreemap/i.test(String(e?.error?.message || ''))) m.setStyle(FALLBACK) })
-    m.on('load', () => {
-      for (const id of ['zones', 'radius', 'draw', 'alt', 'band']) m.addSource(id, { type: 'geojson', data: { type: 'FeatureCollection', features: [] } })
+    const addLayers = () => {
+      for (const id of ['zones', 'radius', 'draw', 'alt', 'band']) if (!m.getSource(id)) m.addSource(id, { type: 'geojson', data: { type: 'FeatureCollection', features: [] } })
       m.addLayer({ id: 'band-fill', type: 'fill', source: 'band', paint: { 'fill-color': ['get', 'color'], 'fill-opacity': 0.22 } })
       m.addLayer({ id: 'band-line', type: 'line', source: 'band', paint: { 'line-color': ['get', 'color'], 'line-width': 2, 'line-dasharray': [2, 2] } })
       m.addLayer({ id: 'zones-fill', type: 'fill', source: 'zones', paint: { 'fill-color': ['get', 'color'], 'fill-opacity': 0.12 } })
       m.addLayer({ id: 'zones-line', type: 'line', source: 'zones', paint: { 'line-color': ['get', 'color'], 'line-width': 2, 'line-dasharray': [3, 2] } })
-      m.addLayer({ id: 'zones-label', type: 'symbol', source: 'zones', layout: { 'text-field': ['get', 'name'], 'text-size': 12, 'text-font': ['Noto Sans Bold'] }, paint: { 'text-color': ['get', 'color'], 'text-halo-color': '#fff', 'text-halo-width': 1.5 } })
+      m.addLayer({ id: 'zones-label', type: 'symbol', source: 'zones', layout: { 'text-field': ['get', 'name'], 'text-size': 12, 'text-font': ['Noto Sans Bold'] }, paint: { 'text-color': ['get', 'color'], 'text-halo-color': '#0B1322', 'text-halo-width': 1.6 } })
       m.addLayer({ id: 'radius-fill', type: 'fill', source: 'radius', paint: { 'fill-color': ['get', 'color'], 'fill-opacity': ['case', ['get', 'sel'], 0.28, 0.16] } })
       m.addLayer({ id: 'radius-line', type: 'line', source: 'radius', paint: { 'line-color': ['get', 'color'], 'line-width': 1.5 } })
       m.addLayer({ id: 'alt-line', type: 'line', source: 'alt', paint: { 'line-color': '#2E4A8B', 'line-width': 2, 'line-dasharray': [2, 2] } })
@@ -47,14 +47,18 @@ export default function MapView({ markers = [], zones = [], bands = [], draw = n
       m.addLayer({ id: 'draw-pts', type: 'circle', source: 'draw', filter: ['==', '$type', 'Point'], paint: { 'circle-radius': 5, 'circle-color': '#fff', 'circle-stroke-color': ['get', 'color'], 'circle-stroke-width': 2.5 } })
       ready.current = true
       m.fire('aiq-ready')
-    })
+    }
+    m.on('load', addLayers)
     m.on('click', (e) => cb.current.onClick && cb.current.onClick({ lat: e.lngLat.lat, lon: e.lngLat.lng }))
     map.current = m
+    // re-apply the basemap (and re-add our layers) when the user flips the light/dark theme
+    const onTheme = () => { ready.current = false; m.setStyle(mapStyle()); m.once('styledata', addLayers) }
+    window.addEventListener('aiq-theme', onTheme)
     // the container can change size after the map was created (mobile layout, sidebar, keyboard): keep the canvas in sync
     const ro = new ResizeObserver(() => { try { m.resize() } catch { /* map removed */ } })
     ro.observe(el.current)
     const t = setTimeout(() => { try { m.resize() } catch { /* ignore */ } }, 300)
-    return () => { clearTimeout(t); ro.disconnect(); m.remove(); map.current = null; ready.current = false }
+    return () => { clearTimeout(t); ro.disconnect(); window.removeEventListener('aiq-theme', onTheme); m.remove(); map.current = null; ready.current = false }
   }, [])
 
   // zones + draw

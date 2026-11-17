@@ -16,11 +16,7 @@ async function call(method, path, body, isForm = false) {
   let data = null
   try { data = await r.json() } catch { /* empty */ }
   if (!r.ok) {
-    if (r.status === 401) {
-      // token missing / stale (e.g. server was restarted): clear it and go to a clean login, once
-      auth.clear()
-      if (!location.pathname.startsWith('/login') && !location.pathname.startsWith('/register')) location.replace('/login')
-    }
+    if (r.status === 401) auth.clear()   // stale/missing token: drop it. The shells gate on /api/me and route to login.
     throw new Error((data && (data.detail || data.message)) || ('HTTP ' + r.status))
   }
   return data
@@ -40,6 +36,12 @@ export const FLAG = {
   'UNRESOLVED': { cls: 'chip-unres', label: 'Call first', color: '#C0392B', hint: 'Not on the map — call before dispatch' },
 }
 export const flagOf = (f) => FLAG[f] || { cls: 'chip-grey', label: f || '—', color: '#5A6B85', hint: '' }
+
+export const theme = {
+  get: () => localStorage.getItem('aiq_theme') || 'dark',
+  apply: (t) => { document.documentElement.classList.toggle('light', t === 'light'); try { localStorage.setItem('aiq_theme', t) } catch { /* ignore */ } window.dispatchEvent(new Event('aiq-theme')) },
+  toggle: () => { const next = theme.get() === 'light' ? 'dark' : 'light'; theme.apply(next); return next },
+}
 
 export const fmtMoney = (n) => 'Rs ' + Number(n || 0).toLocaleString('en-PK')
 export const navUrl = (lat, lon) => `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}&travelmode=driving`

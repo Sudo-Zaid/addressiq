@@ -12,7 +12,7 @@ export default function Register() {
   }
   return <div className="min-h-full flex items-center justify-center p-6">
     <form onSubmit={go} className="card w-full max-w-sm p-7">
-      <Logo /><h2 className="text-2xl font-extrabold text-navy mt-5">Rider sign-up</h2><p className="text-sm text-muted mt-1">Enter the join code your company's dispatcher gave you. After sign-up they assign you an area and orders appear in your app automatically.</p>
+      <Logo /><h2 className="text-2xl font-extrabold text-bright mt-5">Rider sign-up</h2><p className="text-sm text-muted mt-1">Enter the join code your company's dispatcher gave you. After sign-up they assign you an area and orders appear in your app automatically.</p>
       <div className="mt-6 space-y-4">
         <div><label className="label">Company join code</label><input className="input uppercase tracking-wider" value={f.org_code} onChange={set('org_code')} placeholder="e.g. ZAI-1234" required /></div>
         <div><label className="label">Full name</label><input className="input" value={f.name} onChange={set('name')} required /></div>
@@ -22,7 +22,7 @@ export default function Register() {
         {err && <div className="text-sm text-red font-semibold">{err}</div>}
         <button className="btn-primary w-full py-3" disabled={busy}>{busy ? <Spinner /> : 'Create account'}</button>
       </div>
-      <p className="mt-5 text-sm text-muted">Already registered? <Link to="/login" className="text-navy font-semibold">Sign in</Link></p>
+      <p className="mt-5 text-sm text-muted">Already registered? <Link to="/login" className="text-bright font-semibold">Sign in</Link></p>
     </form>
   </div>
 }

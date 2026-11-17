@@ -2,7 +2,9 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import './index.css'
-import { auth } from './api'
+import { auth, theme } from './api'
+
+theme.apply(theme.get())   // restore the saved light/dark choice before the first render
 import Login from './pages/Login'
 import Register from './pages/Register'
 import SellerShell from './pages/SellerShell'

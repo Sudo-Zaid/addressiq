@@ -19,7 +19,7 @@ export default function Zones() {
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
         {!draw ? <button className="btn-primary" onClick={() => setDraw({ points: [], color: COLORS[zones.length % COLORS.length] })}><PenTool size={16} /> Draw a new zone</button> :
-          <><span className="text-sm font-semibold text-navy">Click the map to add corners ({draw.points.length})</span>
+          <><span className="text-sm font-semibold text-bright">Click the map to add corners ({draw.points.length})</span>
             <input className="input w-56" placeholder="Zone name (e.g. Civil Lines)" value={name} onChange={e => setName(e.target.value)} />
             <button className="btn-green" onClick={save} disabled={draw.points.length < 3}><Check size={16} /> Save zone</button>
             <button className="btn-ghost" onClick={() => setDraw(null)}><X size={16} /> Cancel</button></>}
@@ -28,14 +28,14 @@ export default function Zones() {
       <div className="card p-2 h-[420px] xl:h-auto xl:flex-1 xl:min-h-[480px]"><MapView zones={zones} draw={draw} fit="zones" onClick={(p) => { if (draw) setDraw({ ...draw, points: [...draw.points, [p.lat, p.lon]] }) }} /></div>
     </div>
     <div className="grid gap-4 content-start">
-      <div className="card p-4"><h3 className="font-bold text-navy">Zones</h3>
+      <div className="card p-4"><h3 className="font-bold text-bright">Zones</h3>
         <ul className="mt-3 space-y-2">{zones.map(z => <li key={z.id} className="flex items-center gap-3 rounded-xl border border-line p-3 text-sm"><span className="w-3.5 h-3.5 rounded-full" style={{ background: z.color }} />
           <div className="min-w-0"><div className="font-semibold">{z.name}</div><div className="text-xs text-muted">{z.riders.length ? z.riders.map(r => r.name).join(', ') : <span className="text-red font-semibold">no rider</span>} · {z.open_orders} open orders</div></div>
           <button className="ml-auto text-muted hover:text-red" onClick={() => del(z)}><Trash2 size={16} /></button></li>)}</ul>
       </div>
-      <div className="card p-4"><h3 className="font-bold text-navy flex items-center gap-2"><Users size={18} /> Riders {pending.length > 0 && <span className="chip-unres ml-auto">{pending.length} waiting for a zone</span>}</h3>
+      <div className="card p-4"><h3 className="font-bold text-bright flex items-center gap-2"><Users size={18} /> Riders {pending.length > 0 && <span className="chip-unres ml-auto">{pending.length} waiting for a zone</span>}</h3>
         <ul className="mt-3 space-y-2">{riders.map(r => <li key={r.id} className={'rounded-xl border p-3 text-sm ' + (!r.zone_id ? 'border-red/40 bg-red/5' : 'border-line')}>
-          <div className="flex items-center gap-2"><span className="w-8 h-8 rounded-full bg-ice-2 grid place-items-center font-bold text-navy text-xs">{r.name[0]}</span><div><div className="font-semibold">{r.name}</div><div className="text-xs text-muted">@{r.username} · {r.phone || 'no phone'} · {r.open} open / {r.delivered} delivered</div></div></div>
+          <div className="flex items-center gap-2"><span className="w-8 h-8 rounded-full bg-ice-2 grid place-items-center font-bold text-bright text-xs">{r.name[0]}</span><div><div className="font-semibold">{r.name}</div><div className="text-xs text-muted">@{r.username} · {r.phone || 'no phone'} · {r.open} open / {r.delivered} delivered</div></div></div>
           <select className="input mt-2 py-1.5 text-xs" value={r.zone_id || ''} onChange={e => setZone(r, e.target.value)}><option value="">— no zone (gets nothing) —</option>{zones.map(z => <option key={z.id} value={z.id}>{z.name}</option>)}</select></li>)}</ul>
       </div>
     </div>

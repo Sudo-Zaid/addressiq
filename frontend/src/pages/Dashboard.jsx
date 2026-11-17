@@ -22,17 +22,17 @@ export default function Dashboard() {
       <div className="card p-2 h-[420px] xl:h-auto xl:min-h-[460px]"><MapView markers={markers} zones={zones} onMarkerClick={(id) => setSel(Number(id))} fit={sel ? 'selected' : 'markers'} /></div>
       <div className="grid gap-5 content-start">
         <div className="card p-4">
-          <div className="flex items-center justify-between"><h3 className="font-bold text-navy">Latest orders</h3><Link to="/app/orders" className="text-xs font-semibold text-navy-3">All orders →</Link></div>
+          <div className="flex items-center justify-between"><h3 className="font-bold text-bright">Latest orders</h3><Link to="/app/orders" className="text-xs font-semibold text-sky">All orders →</Link></div>
           {orders.length === 0 ? <Empty icon={Package} title="No orders yet" text="Upload the sample CSV to see pins, colours and auto-assignment." action={<Link to="/app/orders" className="btn-primary mt-2"><Upload size={16} />Upload orders</Link>} /> :
             <ul className="mt-3 divide-y divide-line/60">{orders.slice(0, 8).map(o => <li key={o.id} onClick={() => setSel(o.id)} className={'py-2.5 cursor-pointer -mx-2 px-2 rounded-lg hover:bg-ice ' + (sel === o.id ? 'bg-ice' : '')}>
               <div className="flex items-center gap-2"><span className="font-semibold text-sm truncate">{o.customer_name}</span><span className="ml-auto text-xs text-muted">{fmtMoney(o.amount)}</span></div>
               <div className="text-xs text-muted truncate">{o.address_text}</div>
               <div className="mt-1 flex items-center gap-2"><Chip flag={o.flag} /><StatusChip s={o.status} />{o.rider_name && <span className="text-xs text-muted">→ {o.rider_name}</span>}<span className="ml-auto text-[11px] text-muted">{timeAgo(o.created_at)}</span></div></li>)}</ul>}
         </div>
-        <div className="card p-4"><h3 className="font-bold text-navy">Riders</h3>
-          <ul className="mt-3 space-y-2">{riders.map(r => <li key={r.id} className="flex items-center gap-3 text-sm"><span className="w-8 h-8 rounded-full bg-ice-2 grid place-items-center font-bold text-navy text-xs">{r.name[0]}</span>
+        <div className="card p-4"><h3 className="font-bold text-bright">Riders</h3>
+          <ul className="mt-3 space-y-2">{riders.map(r => <li key={r.id} className="flex items-center gap-3 text-sm"><span className="w-8 h-8 rounded-full bg-ice-2 grid place-items-center font-bold text-bright text-xs">{r.name[0]}</span>
             <div className="min-w-0"><div className="font-semibold truncate">{r.name}</div><div className="text-xs text-muted">{r.zone_name || <span className="text-red font-semibold">no zone yet</span>}</div></div>
-            <div className="ml-auto text-right text-xs"><div className="font-bold text-navy">{r.open} open</div><div className="text-muted">{r.delivered} done</div></div></li>)}</ul>
+            <div className="ml-auto text-right text-xs"><div className="font-bold text-bright">{r.open} open</div><div className="text-muted">{r.delivered} done</div></div></li>)}</ul>
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { api, auth } from '../api'
 import { Logo, Spinner } from '../components/ui'
@@ -9,6 +9,7 @@ const DEMO = [{ u: 'admin', p: 'admin123', label: 'Platform admin', icon: Shield
 
 export default function Login() {
   const nav = useNavigate(); const [u, setU] = useState(''); const [p, setP] = useState(''); const [err, setErr] = useState(''); const [busy, setBusy] = useState(false)
+  useEffect(() => { auth.clear() }, [])   // always start from a clean slate so a stale token can't fight a fresh login
   async function go(e, uu = u, pp = p) {
     e?.preventDefault(); setBusy(true); setErr('')
     try { const r = await api.post('/api/auth/login', { username: uu, password: pp }); auth.set(r.token, r.user); nav(r.user.role === 'rider' ? '/rider' : (r.user.role === 'admin' ? '/app/orgs' : '/app')) }
@@ -29,7 +30,7 @@ export default function Login() {
     <div className="flex items-center justify-center p-6">
       <form onSubmit={go} className="w-full max-w-sm">
         <div className="lg:hidden mb-8"><Logo size="lg" /></div>
-        <h2 className="text-2xl font-extrabold text-navy">Sign in</h2><p className="text-sm text-muted mt-1">Seller dashboard or rider app — same login.</p>
+        <h2 className="text-2xl font-extrabold text-bright">Sign in</h2><p className="text-sm text-muted mt-1">Seller dashboard or rider app — same login.</p>
         <div className="mt-6 space-y-4">
           <div><label className="label">Username</label><input className="input" value={u} onChange={e => setU(e.target.value)} autoFocus autoCapitalize="none" /></div>
           <div><label className="label">Password</label><input className="input" type="password" value={p} onChange={e => setP(e.target.value)} /></div>
@@ -37,9 +38,9 @@ export default function Login() {
           <button className="btn-primary w-full py-3" disabled={busy}>{busy ? <Spinner /> : 'Sign in'}</button>
         </div>
         <div className="mt-8"><div className="label">Demo accounts</div>
-          <div className="grid gap-2">{DEMO.map(d => <button type="button" key={d.u} onClick={(e) => go(e, d.u, d.p)} className="btn-ghost justify-start"><d.icon size={16} className="text-navy-3" />{d.label}<span className="ml-auto text-xs text-muted">{d.u} / {d.p}</span></button>)}</div>
+          <div className="grid gap-2">{DEMO.map(d => <button type="button" key={d.u} onClick={(e) => go(e, d.u, d.p)} className="btn-ghost justify-start"><d.icon size={16} className="text-sky" />{d.label}<span className="ml-auto text-xs text-muted">{d.u} / {d.p}</span></button>)}</div>
         </div>
-        <p className="mt-6 text-sm text-muted">New rider? <Link to="/register" className="text-navy font-semibold">Create an account</Link> · <Link to="/collect" className="text-navy font-semibold">Volunteer: add an address</Link></p>
+        <p className="mt-6 text-sm text-muted">New rider? <Link to="/register" className="text-bright font-semibold">Create an account</Link> · <Link to="/collect" className="text-bright font-semibold">Volunteer: add an address</Link></p>
       </form>
     </div>
   </div>

@@ -1,8 +1,13 @@
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Package, Map, Brain, ClipboardList, LogOut, Menu, Building2, Sparkles } from 'lucide-react'
+import { LayoutDashboard, Package, Map, Brain, ClipboardList, LogOut, Menu, Building2, Sparkles, Sun, Moon } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { api, auth } from '../api'
-import { Logo } from '../components/ui'
+import { api, auth, theme } from '../api'
+import { Logo, Spinner } from '../components/ui'
+
+export function ThemeToggle() {
+  const [t, setT] = useState(theme.get())
+  return <button onClick={() => setT(theme.toggle())} title="Switch theme" className="btn-ghost px-2.5 py-1.5">{t === 'light' ? <Moon size={16} /> : <Sun size={16} />}</button>
+}
 
 const SELLER_NAV = [
   { to: '/app/demo', icon: Sparkles, label: 'Live demo' },
@@ -20,11 +25,12 @@ const ADMIN_NAV = [
   { to: '/app/collect', icon: ClipboardList, label: 'Collect data' },
 ]
 export default function SellerShell() {
-  const nav = useNavigate(); const u = auth.user(); const [open, setOpen] = useState(false); const loc = useLocation()
-  // a token can go stale (server reset): verify once on mount and send the user to a clean login instead of scattered errors
-  useEffect(() => { api.get('/api/me').catch(() => { auth.clear(); nav('/login') }) }, [nav])
+  const nav = useNavigate(); const u = auth.user(); const [open, setOpen] = useState(false); const loc = useLocation(); const [ok, setOk] = useState(false)
+  // verify the session ONCE before any child page fires its own calls, so a stale token can never scatter 401s
+  useEffect(() => { let live = true; api.get('/api/me').then(() => live && setOk(true)).catch(() => { auth.clear(); nav('/login', { replace: true }) }); return () => { live = false } }, [nav])
   const NAV = u?.role === 'admin' ? ADMIN_NAV : SELLER_NAV
   const title = NAV.find(n => n.end ? loc.pathname === n.to : loc.pathname.startsWith(n.to))?.label || ''
+  if (!ok) return <div className="h-full grid place-items-center text-muted"><Spinner /></div>
   return <div className="h-full flex">
     <aside className={'fixed lg:static z-40 inset-y-0 left-0 w-64 bg-navy text-white flex flex-col p-4 transition-transform ' + (open ? '' : '-translate-x-full lg:translate-x-0')}>
       <div className="px-2 py-2"><Logo light /></div>
@@ -36,10 +42,10 @@ export default function SellerShell() {
     </aside>
     {open && <div className="fixed inset-0 bg-black/30 z-30 lg:hidden" onClick={() => setOpen(false)} />}
     <main className="flex-1 min-w-0 flex flex-col">
-      <header className="h-14 flex items-center gap-3 px-4 lg:px-6 border-b border-line bg-white/70 backdrop-blur sticky top-0 z-20">
-        <button className="lg:hidden text-navy" onClick={() => setOpen(true)}><Menu /></button>
-        <h1 className="font-extrabold text-navy text-lg">{title}</h1>
-        <div className="ml-auto text-xs text-muted hidden sm:block">Jhelum · Dina · OpenStreetMap data · no paid API</div>
+      <header className="h-14 flex items-center gap-3 px-4 lg:px-6 border-b border-line bg-deep/60 backdrop-blur-xl sticky top-0 z-20">
+        <button className="lg:hidden text-bright" onClick={() => setOpen(true)}><Menu /></button>
+        <h1 className="font-extrabold text-bright text-lg">{title}</h1>
+        <div className="ml-auto flex items-center gap-3"><span className="text-xs text-muted hidden sm:block">Jhelum · Dina · OpenStreetMap data · no paid API</span><ThemeToggle /></div>
       </header>
       <div className="flex-1 min-h-0 p-4 lg:p-6 overflow-auto"><Outlet /></div>
     </main>
