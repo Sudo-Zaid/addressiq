@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { api, flagOf, fmtMoney, navUrl } from '../api'
 import { orderMarkers } from '../orderPins'
 import MapView from '../components/MapView'
+import OrderFacts from '../components/OrderFacts'
 import { Chip, Spinner, Toast } from '../components/ui'
 import { ArrowLeft, Navigation, PhoneCall, CheckCircle2, MapPin } from 'lucide-react'
 
@@ -22,7 +23,8 @@ export default function RiderOrder() {
   return <div className="space-y-4">
     <Link to="/rider" className="inline-flex items-center gap-1 text-sm font-semibold text-bright"><ArrowLeft size={16} /> My stops</Link>
     <div className="card p-4"><div className="flex items-start gap-3"><div className="min-w-0 flex-1"><div className="font-extrabold text-lg text-bright">{o.customer_name}</div><div className="text-sm text-muted">{o.address_text}</div></div><div className="text-right"><div className="font-extrabold text-bright">{fmtMoney(o.amount)}</div><div className="text-[11px] text-muted">cash on delivery</div></div></div>
-      <div className="mt-3 flex items-center gap-2 flex-wrap"><Chip flag={o.flag} /><span className="text-xs text-muted">{f.hint}{o.lat != null && ` · within ${Math.round(o.radius_m)} m`}</span></div></div>
+      <div className="mt-3 flex items-center gap-2 flex-wrap"><Chip flag={o.flag} /><span className="text-xs text-muted">{f.hint}</span></div>
+      <OrderFacts o={o} /></div>
     <div className="card p-1.5 h-[300px]"><MapView markers={orderMarkers([o], { sel: o.id })} me={me} zoom={14} /></div>
     <div className="card p-4 text-sm"><div className="flex items-start gap-2"><MapPin size={16} className="text-bright mt-0.5 shrink-0" /><span>{o.explanation}</span></div>
       {o.result?.matched?.landmark && <div className="mt-2 text-xs text-muted">Landmark: <b className="text-ink">{o.result.matched.landmark.name}</b>{o.result.matched.landmark.relation && ` · "${o.result.matched.landmark.relation}"`}</div>}

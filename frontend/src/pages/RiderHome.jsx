@@ -21,7 +21,7 @@ export default function RiderHome() {
       <ul className="space-y-3">{list.map((o, i) => <li key={o.id}><Link to={`/rider/${o.id}`} className="card p-4 flex items-center gap-3 active:scale-[.99] transition">
         <span className="w-9 h-9 rounded-full grid place-items-center font-extrabold text-white text-sm" style={{ background: flagOf(o.flag).color }}>{i + 1}</span>
         <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><span className="font-bold truncate">{o.customer_name}</span><span className="text-xs font-bold text-bright ml-auto">{fmtMoney(o.amount)}</span></div>
-          <div className="text-xs text-muted truncate">{o.address_text}</div><div className="mt-1.5"><Chip flag={o.flag} /></div></div>
+          <div className="text-xs text-muted truncate">{o.address_text}</div><div className="mt-1.5 flex items-center gap-2"><Chip flag={o.flag} />{o.lat != null && <span className="text-[11px] text-muted">Radius {Math.round(o.radius_m || 0)} m</span>}</div></div>
         <ChevronRight className="text-muted" size={18} /></Link></li>)}</ul>}
   </div>
 }

@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { api, flagOf } from '../api'
 import { AREA_FILL } from '../orderPins'
 import MapView from '../components/MapView'
+import OrderFacts from '../components/OrderFacts'
 import { Chip, Spinner } from '../components/ui'
 import { Sparkles, Mic, MicOff, Play, RotateCcw, FileText, Tags, MapIcon, Compass, Gavel, Brain, Check } from 'lucide-react'
 
@@ -123,8 +124,9 @@ export default function Demo() {
             </div></li>
         })}</ol>
         {step >= 5 && r && <div className={'mt-3 rounded-xl border p-3 ' + (memory ? 'border-amber bg-amber/10' : 'border-line bg-ice')}>
-          <div className="flex items-center gap-2 flex-wrap">{memory && <span className="chip bg-amber text-navy"><Brain size={12} /> Memory</span>}<Chip flag={r.flag} />{r.lat != null && <span className="text-xs text-muted">{r.granularity} · within {Math.round(r.radius_m)} m</span>}</div>
-          <p className="mt-2 text-sm min-h-[40px]">{typed}<span className="animate-pulse">▌</span></p>
+          <div className="flex items-center gap-2 flex-wrap">{memory && <span className="chip bg-amber text-navy"><Brain size={12} /> Memory</span>}<Chip flag={r.flag} /></div>
+          <OrderFacts o={{ ...r, result: r }} />
+          <p className="mt-3 text-sm min-h-[40px]">{typed}<span className="animate-pulse">▌</span></p>
           {r.not_found?.length > 0 && <div className="text-xs text-red mt-1">Not on the map: {r.not_found.join(', ')}</div>}
           <div className="mt-2 flex gap-2"><button className="btn-ghost px-3 py-1.5 text-xs" onClick={() => play(r)}><RotateCcw size={13} /> Replay</button>
             {!memory && r.flag === 'FOUND' && <span className="text-[11px] text-muted self-center">Tip: deliver this order once, run it again — watch the Memory step appear.</span>}</div>
