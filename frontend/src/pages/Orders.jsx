@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { api, flagOf, fmtMoney } from '../api'
 import { orderMarkers } from '../orderPins'
 import MapView from '../components/MapView'
+import OrderFacts from '../components/OrderFacts'
 import { Chip, StatusChip, Empty, Toast, Spinner } from '../components/ui'
 import { Upload, Plus, Trash2, Crosshair, MapPinned, Check, X, FileDown, Package } from 'lucide-react'
 
@@ -24,7 +25,7 @@ export default function Orders() {
   const markers = orderMarkers(orders, { sel, override: fixing && fixPos ? { [fixing]: { ...fixPos, color: '#2563eb', radius: 0, rlat: undefined, rlon: undefined, alternatives: [], draggable: true, pulse: true } } : {} })
   const pick = (id) => { setSel(id); setFocus(f => f + 1) }      // clicking the same order again frames it again
   // xl: one fixed-height row, so the table scrolls inside its card and the map always fits the screen
-  return <div className="grid xl:grid-cols-[minmax(0,1fr)_380px] 2xl:grid-cols-[minmax(0,1fr)_460px] xl:grid-rows-[minmax(0,1fr)] gap-5 xl:h-full xl:min-h-[560px]">
+  return <div className="grid xl:grid-cols-[minmax(0,1fr)_380px] 2xl:grid-cols-[minmax(0,1fr)_460px] xl:grid-rows-[minmax(0,1fr)] gap-5 xl:h-full xl:min-h-[480px]">
     <div className="flex flex-col gap-4 min-w-0 xl:min-h-0">
       <div className="flex flex-wrap items-center gap-2">
         <input ref={file} type="file" accept=".csv" className="hidden" onChange={e => upload(e.target.files[0])} />
@@ -57,10 +58,11 @@ export default function Orders() {
       </div>
     </div>
     <div className="flex flex-col gap-4 min-w-0 xl:min-h-0 xl:overflow-auto">
-      <div className="card p-2 h-[360px] xl:h-auto xl:flex-1 xl:min-h-[300px]"><MapView markers={markers} zones={zones} onMarkerClick={(id) => pick(Number(id))} onMarkerDrag={(id, p) => { if (Number(id) === fixing) setFixPos(p) }} onClick={(p) => { if (fixing) setFixPos(p) }} fit={fixing ? null : (sel ? 'selected' : 'markers')} focusKey={focus} /></div>
+      <div className="card p-2 h-[360px] xl:h-auto xl:flex-1 xl:min-h-[240px]"><MapView className="min-h-[220px]" markers={markers} zones={zones} onMarkerClick={(id) => pick(Number(id))} onMarkerDrag={(id, p) => { if (Number(id) === fixing) setFixPos(p) }} onClick={(p) => { if (fixing) setFixPos(p) }} fit={fixing ? null : (sel ? 'selected' : 'markers')} focusKey={focus} /></div>
       {fixing && <div className="card p-3 text-sm bg-blue-50 border-blue-200"><b>Fix pin:</b> drag the blue pin (or click the map) to where the customer actually is, then press ✓. The address is saved to the learning store.</div>}
       {cur && <div className="card p-4 text-sm">
         <div className="flex items-start gap-2"><MapPinned size={18} className="text-bright mt-0.5" /><div className="min-w-0"><div className="font-bold text-bright">{cur.customer_name}</div><div className="text-muted">{cur.address_text}</div></div><div className="ml-auto"><Chip flag={cur.flag} /></div></div>
+        <OrderFacts o={cur} />
         <p className="mt-3">{cur.explanation}</p>
         {cur.result?.matched && Object.keys(cur.result.matched).length > 0 && <div className="mt-3 grid gap-1 text-xs">
           {cur.result.matched.landmark && <div><span className="label inline mr-2">Landmark</span>{cur.result.matched.landmark.name}{cur.result.matched.landmark.relation && <span className="text-muted"> · "{cur.result.matched.landmark.relation}"</span>}</div>}

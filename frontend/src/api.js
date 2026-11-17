@@ -53,6 +53,15 @@ export const theme = {
 
 export const fmtMoney = (n) => 'Rs ' + Number(n || 0).toLocaleString('en-PK')
 export const navUrl = (lat, lon) => `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}&travelmode=driving`
+export const mapsUrl = (lat, lon) => `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`     // a pin at the point, to check it by eye
+// navigator.clipboard only exists on HTTPS / localhost; on the LAN address (http://192.168…) fall back to a hidden textarea
+export async function copyText(text) {
+  try { if (navigator.clipboard && window.isSecureContext) { await navigator.clipboard.writeText(text); return true } } catch { /* use the fallback */ }
+  const ta = document.createElement('textarea'); ta.value = text; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0'
+  document.body.appendChild(ta); ta.select()
+  let ok = false; try { ok = document.execCommand('copy') } catch { ok = false }
+  ta.remove(); return ok
+}
 export const timeAgo = (ts) => {
   if (!ts) return ''
   const s = Math.max(0, Date.now() / 1000 - ts)

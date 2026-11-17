@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { api } from '../api'
+import { api, copyText } from '../api'
 import { Toast, Spinner } from '../components/ui'
 import { Building2, Plus, Power, Copy, Users, Bike, Map, Package, Brain, Trash2 } from 'lucide-react'
 
@@ -17,7 +17,7 @@ export default function Orgs() {
     if (!confirm(`Delete "${o.name}" permanently?\n\nThis removes its ${o.sellers.length} dispatcher login(s), ${o.riders} rider(s), ${o.zones} zone(s) and ${o.stats.orders} order(s). Shared learning-store points are kept.\n\nTip: use Disable if you may need it again.`)) return
     try { await api.del(`/api/admin/orgs/${o.id}`); await load(); say(`${o.name} deleted`) } catch (ex) { say(ex.message, 'err') }
   }
-  const copy = (t) => { navigator.clipboard?.writeText(t); say('Copied: ' + t) }
+  const copy = async (t) => { (await copyText(t)) ? say('Copied: ' + t) : say('Could not copy — select the code by hand', 'err') }
   const pct = (s) => s.orders ? Math.round(100 * s.found / s.orders) : 0
   const K = ({ v, l }) => <div className="kpi"><div className="v">{v ?? '–'}</div><div className="l">{l}</div></div>
   return <div className="grid gap-5">

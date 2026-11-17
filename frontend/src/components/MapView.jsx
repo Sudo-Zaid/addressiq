@@ -270,5 +270,6 @@ export default function MapView({ markers = [], zones = [], bands = [], draw = n
     ready.current ? apply() : m.once('aiq-ready', apply)
   }, [markers, fit, me, focusKey])
 
-  return <div ref={el} className={'w-full h-full min-h-[300px] rounded-2xl overflow-hidden ' + className} />
+  // a page can pass its own min-h-… (a short map beside a details card); otherwise the map is never shorter than 300 px
+  return <div ref={el} className={'w-full h-full rounded-2xl overflow-hidden ' + (className.includes('min-h-') ? '' : 'min-h-[300px] ') + className} />
 }
