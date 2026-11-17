@@ -95,7 +95,7 @@ def _store_order(user, name, phone, address, amount):
     cur = DB.execute('''INSERT INTO orders(org_id,seller_id,customer_name,phone,address_text,amount,lat,lon,radius_m,granularity,flag,explanation,result_json,
                         premise_key,zone_id,rider_id,status,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
                      (user['org_id'], user['id'], name, phone, address, amount, r.get('lat'), r.get('lon'), r.get('radius_m'), r['granularity'], r['flag'],
-                      r['explanation'], json.dumps({k: r[k] for k in ('matched', 'not_found', 'candidates', 'alternatives', 'parts')}, ensure_ascii=False),
+                      r['explanation'], json.dumps({k: r[k] for k in ('matched', 'not_found', 'candidates', 'alternatives', 'parts', 'band') if k in r}, ensure_ascii=False),
                       r['premise_key'], zone['id'] if zone else None, rider, status, time.time()))
     return cur.lastrowid
 

@@ -1,10 +1,11 @@
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Package, Map, Brain, ClipboardList, LogOut, Menu, Building2 } from 'lucide-react'
+import { LayoutDashboard, Package, Map, Brain, ClipboardList, LogOut, Menu, Building2, Sparkles } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { api, auth } from '../api'
 import { Logo } from '../components/ui'
 
 const SELLER_NAV = [
+  { to: '/app/demo', icon: Sparkles, label: 'Live demo' },
   { to: '/app', end: true, icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/app/orders', icon: Package, label: 'Orders' },
   { to: '/app/zones', icon: Map, label: 'Zones & riders' },
@@ -13,6 +14,7 @@ const SELLER_NAV = [
 ]
 const ADMIN_NAV = [
   { to: '/app/orgs', icon: Building2, label: 'Organizations' },
+  { to: '/app/demo', icon: Sparkles, label: 'Live demo' },
   { to: '/app', end: true, icon: LayoutDashboard, label: 'Platform overview' },
   { to: '/app/learning', icon: Brain, label: 'Learning store' },
   { to: '/app/collect', icon: ClipboardList, label: 'Collect data' },

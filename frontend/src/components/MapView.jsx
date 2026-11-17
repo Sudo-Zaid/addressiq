@@ -24,7 +24,7 @@ function circle([lon, lat], r, n = 48) {
  * draw:    {points:[[lat,lon]], color} | null  (zone drawing in progress)
  * onClick(lngLat), onMarkerClick(id), onMarkerDrag(id, {lat,lon}), fit: 'markers'|'zones'|null, me:{lat,lon}
  */
-export default function MapView({ markers = [], zones = [], draw = null, onClick, onMarkerClick, onMarkerDrag, fit = 'markers', me = null, className = '', center = JHELUM, zoom = 12.5 }) {
+export default function MapView({ markers = [], zones = [], bands = [], draw = null, onClick, onMarkerClick, onMarkerDrag, fit = 'markers', me = null, className = '', center = JHELUM, zoom = 12.5 }) {
   const el = useRef(null), map = useRef(null), mk = useRef({}), ready = useRef(false), cb = useRef({})
   cb.current = { onClick, onMarkerClick, onMarkerDrag }
 
@@ -33,7 +33,9 @@ export default function MapView({ markers = [], zones = [], draw = null, onClick
     m.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
     m.on('error', (e) => { if (!ready.current && /style|tiles\.openfreemap/i.test(String(e?.error?.message || ''))) m.setStyle(FALLBACK) })
     m.on('load', () => {
-      for (const id of ['zones', 'radius', 'draw', 'alt']) m.addSource(id, { type: 'geojson', data: { type: 'FeatureCollection', features: [] } })
+      for (const id of ['zones', 'radius', 'draw', 'alt', 'band']) m.addSource(id, { type: 'geojson', data: { type: 'FeatureCollection', features: [] } })
+      m.addLayer({ id: 'band-fill', type: 'fill', source: 'band', paint: { 'fill-color': ['get', 'color'], 'fill-opacity': 0.22 } })
+      m.addLayer({ id: 'band-line', type: 'line', source: 'band', paint: { 'line-color': ['get', 'color'], 'line-width': 2, 'line-dasharray': [2, 2] } })
       m.addLayer({ id: 'zones-fill', type: 'fill', source: 'zones', paint: { 'fill-color': ['get', 'color'], 'fill-opacity': 0.12 } })
       m.addLayer({ id: 'zones-line', type: 'line', source: 'zones', paint: { 'line-color': ['get', 'color'], 'line-width': 2, 'line-dasharray': [3, 2] } })
       m.addLayer({ id: 'zones-label', type: 'symbol', source: 'zones', layout: { 'text-field': ['get', 'name'], 'text-size': 12, 'text-font': ['Noto Sans Bold'] }, paint: { 'text-color': ['get', 'color'], 'text-halo-color': '#fff', 'text-halo-width': 1.5 } })
@@ -78,6 +80,20 @@ export default function MapView({ markers = [], zones = [], draw = null, onClick
     ready.current ? apply() : m.once('aiq-ready', apply)
   }, [zones, draw, fit])
 
+  // relation bands (annulus: dmin..dmax around a landmark)
+  useEffect(() => {
+    const m = map.current; if (!m) return
+    const apply = () => {
+      const bf = (bands || []).filter(b => b && b.lat != null).map(b => {
+        const rings = [circle([b.lon, b.lat], b.dmax)]
+        if (b.dmin > 10) rings.push(circle([b.lon, b.lat], b.dmin).reverse())
+        return { type: 'Feature', properties: { color: b.color || '#E8A33D' }, geometry: { type: 'Polygon', coordinates: rings } }
+      })
+      m.getSource('band').setData({ type: 'FeatureCollection', features: bf })
+    }
+    ready.current ? apply() : m.once('aiq-ready', apply)
+  }, [bands])
+
   // markers + radius circles
   useEffect(() => {
     const m = map.current; if (!m) return
@@ -98,7 +114,8 @@ export default function MapView({ markers = [], zones = [], draw = null, onClick
           mr.on('dragend', () => { const p = mr.getLngLat(); cb.current.onMarkerDrag && cb.current.onMarkerDrag(k.id, { lat: p.lat, lon: p.lng }) })
           mk.current[k.id] = mr
         }
-        const d = mr.getElement(); d.style.background = color; d.className = 'marker-pin' + (k.selected ? ' sel' : '') + (k.pulse ? ' pulse' : '')
+        const d = mr.getElement(); d.style.background = color; d.style.opacity = k.dim ? '0.45' : '1'
+        d.className = 'marker-pin' + (k.selected ? ' sel' : '') + (k.pulse ? ' pulse' : '')
         if (!mr.getLngLat() || Math.abs(mr.getLngLat().lat - k.lat) > 1e-9 || Math.abs(mr.getLngLat().lng - k.lon) > 1e-9) mr.setLngLat([k.lon, k.lat])
         mr.setDraggable(!!k.draggable)
         if (k.html) { if (!mr.getPopup()) mr.setPopup(new maplibregl.Popup({ offset: 28, closeButton: false })); mr.getPopup().setHTML(k.html) }

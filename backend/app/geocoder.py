@@ -302,11 +302,13 @@ class Geocoder:
                         if d < dmin:   # push out along the landmark->street direction to the band
                             x, y = to_xy(plat, plon, r['lat'], r['lon']); n = math.hypot(x, y) or 1
                             plat, plon = from_xy(x / n * dmin, y / n * dmin, r['lat'], r['lon'])
+                        res['band'] = {'landmark_name': r['name'], 'lat': r['lat'], 'lon': r['lon'], 'relation': rel, 'word': word, 'dmin': dmin, 'dmax': dmax}
                         res.update(lat=plat, lon=plon, radius_m=float(max(60, (dmax - dmin) / 2 + 30)), granularity='STREET', flag='FOUND',
                                    explanation='%s %s %s, on %s.' % (word.capitalize(), r['name'], '', street['name']).replace('  ', ' '))
                         res['explanation'] = '%s is %s %s, and the address names %s, so the pin is where that street passes %s.' % (
                             'The stop', word, r['name'], street['name'], word + ' it')
                         return self._finish(res, alt)
+                res['band'] = {'landmark_name': r['name'], 'lat': r['lat'], 'lon': r['lon'], 'relation': rel, 'word': word, 'dmin': dmin, 'dmax': dmax}
                 res.update(lat=r['lat'], lon=r['lon'], radius_m=float(dmax + 40), granularity='LANDMARK', flag='FOUND',
                            explanation='%s found; "%s" means %s-%s m %s it, but the map does not say which side, so the circle covers all sides.' % (r['name'], rel, dmin, dmax, word))
                 return self._finish(res, alt)
