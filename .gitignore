@@ -1,6 +1,8 @@
 node_modules/
 frontend/dist/
 data/app.sqlite
+data/app.sqlite-wal
+data/app.sqlite-shm
 data/osm_raw.json
 data/*.log
 __pycache__/

@@ -205,6 +205,14 @@ class Geocoder:
         for c in CITIES: body = re.sub(r'\b' + c + r'\b', ' ', body)
         return '%s|%s|%s' % (city, area, re.sub(r'\s+', ' ', body).strip())
 
+    def city_hint(self, city):
+        """An address that could not be placed still gets a reference area for the map: the city it names
+        (the default city when it names none). It is a hint for the dispatcher, never a delivery point."""
+        hits = self.g.search((city or 'Jhelum').lower(), ['town'], limit=1, cutoff=0.6)
+        if not hits: return None
+        r = hits[0][1]
+        return {'name': city or 'Jhelum', 'lat': r['lat'], 'lon': r['lon'], 'radius_m': 2500.0 if r['category'] == 'city' else 1500.0, 'assumed': not city}
+
     def geocode(self, text):
         parts = tag(text)
         res = {'input': text, 'parts': parts, 'matched': {}, 'not_found': [], 'candidates': [], 'alternatives': []}
@@ -329,6 +337,8 @@ class Geocoder:
                            area['name'], ' (the area itself has no boundary on the map)' if area_from_landmark else '',
                            ('"%s" is not on the map' % ', '.join(res['not_found'])) if res['not_found'] else 'the street or landmark is not on the map'))
             return res
+        hint = self.city_hint(parts['city'])
+        if hint: res['hint'] = hint
         res.update(lat=None, lon=None, radius_m=None, granularity='CITY' if parts['city'] else 'NONE', flag='UNRESOLVED',
                    explanation=('Only the city (%s) was recognised' % parts['city'] if parts['city'] else 'No landmark, street or area was recognised') +
                                (' — not on the map: %s.' % ', '.join(res['not_found']) if res['not_found'] else '.') + ' Call the customer before dispatch.')

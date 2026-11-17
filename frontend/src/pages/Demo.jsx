@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { api, flagOf } from '../api'
+import { AREA_FILL } from '../orderPins'
 import MapView from '../components/MapView'
 import { Chip, Spinner } from '../components/ui'
 import { Sparkles, Mic, MicOff, Play, RotateCcw, FileText, Tags, MapIcon, Compass, Gavel, Brain, Check } from 'lucide-react'
@@ -57,7 +58,10 @@ export default function Demo() {
     })
     at(res.band ? 5200 : 4600, () => {
       setStep(5)
-      const win = res.lat != null ? [{ id: 'win', lat: res.lat, lon: res.lon, color: f.color, radius: res.radius_m, selected: true, alternatives: res.alternatives || [] }] : []
+      // found / area-only: the pin with its circle (yellow for an area). Not found: only the red dashed reference circle of the city.
+      const h = res.hint
+      const win = res.lat != null ? [{ id: 'win', lat: res.lat, lon: res.lon, color: f.color, fill: res.flag === 'AREA-ONLY' ? AREA_FILL : undefined, radius: res.radius_m, selected: true, alternatives: res.alternatives || [] }]
+        : h ? [{ id: 'win', lat: h.lat, lon: h.lon, color: f.color, radius: h.radius_m, dashed: true, selected: true, html: `<b>${h.name}</b><br/>Only the city is known — call first` }] : []
       setMarkers([...win, ...candidateMarkers(res, { dim: true, near: res.lat != null ? res : undefined })])
       typeOut(res.explanation)
     })
@@ -91,7 +95,7 @@ export default function Demo() {
     p.city && [p.city, '#3C8D5A'],
   ].filter(Boolean) : []
 
-  return <div className="grid xl:grid-cols-[440px_1fr] gap-5 h-full min-h-[600px]">
+  return <div className="grid xl:grid-cols-[440px_1fr] gap-5">
     <div className="flex flex-col gap-4 min-w-0">
       <div className="card p-4">
         <div className="flex items-center gap-2 text-bright font-extrabold"><Sparkles size={18} className="text-amber" /> Watch it think</div>
@@ -108,18 +112,18 @@ export default function Demo() {
       <div className="card p-4 flex-1">
         <ol className="space-y-1">{STEPS.map((s, i) => {
           const n = i + 1, on = step >= n, cur = step === n
-          return <li key={i} className={'flex items-start gap-3 rounded-xl px-3 py-2.5 transition ' + (cur ? 'step-cur' : on ? 'bg-ice' : 'opacity-45')}>
-            <span className={'mt-0.5 w-7 h-7 rounded-full grid place-items-center shrink-0 ' + (cur ? 'bg-amber text-bright' : on ? 'bg-green text-white' : 'bg-ice-2 text-muted')}>{on && !cur ? <Check size={15} /> : <s.icon size={15} />}</span>
+          return <li key={i} className={'flex items-start gap-3 rounded-xl px-3 py-2.5 transition ' + (cur ? 'bg-navy text-white shadow-card step-cur' : on ? 'bg-ice' : 'opacity-45')}>
+            <span className={'mt-0.5 w-7 h-7 rounded-full grid place-items-center shrink-0 ' + (cur ? 'bg-amber text-navy' : on ? 'bg-green text-white' : 'bg-ice-2 text-muted')}>{on && !cur ? <Check size={15} /> : <s.icon size={15} />}</span>
             <div className="min-w-0"><div className={'text-sm font-bold ' + (cur ? '' : 'text-bright')}>{s.title}</div>
               <div className={'text-xs ' + (cur ? 'text-white/75' : 'text-muted')}>{s.sub}</div>
-              {n === 1 && on && r && <div className="mt-1.5 text-xs font-mono rounded-lg bg-deep/70 text-sky px-2 py-1.5 border border-line">{(p?.segments || []).join('  ·  ')}</div>}
+              {n === 1 && on && r && <div className="mt-1.5 text-xs font-mono rounded-lg bg-white/90 text-ink dark:bg-[#070D1C]/70 dark:text-sky px-2 py-1.5 border border-line">{(p?.segments || []).join('  ·  ')}</div>}
               {n === 2 && on && chips.length > 0 && <div className="mt-1.5 flex flex-wrap gap-1">{chips.map(([t, c], j) => <span key={j} className="text-[11px] font-bold rounded-full px-2 py-0.5 text-white" style={{ background: c }}>{t}</span>)}</div>}
               {n === 3 && on && r && <div className={'mt-1 text-xs ' + (cur ? 'text-white/85' : 'text-muted')}>{memory ? 'skipped — answered straight from delivery memory' : (r.candidates?.length ? `${r.candidates.length} candidate place(s) found` : 'nothing matched on the map')}{!memory && r.matched?.area && ` · area: ${r.matched.area.name}`}</div>}
               {n === 4 && on && r && <div className={'mt-1 text-xs ' + (cur ? 'text-white/85' : 'text-muted')}>{memory ? 'skipped — the exact door is already known' : (r.band ? `"${r.band.relation}" → ${r.band.dmin}–${r.band.dmax} m ${r.band.word} ${r.band.landmark_name}` : 'no relation word in this address')}</div>}
             </div></li>
         })}</ol>
         {step >= 5 && r && <div className={'mt-3 rounded-xl border p-3 ' + (memory ? 'border-amber bg-amber/10' : 'border-line bg-ice')}>
-          <div className="flex items-center gap-2 flex-wrap">{memory && <span className="chip bg-amber text-bright"><Brain size={12} /> Memory</span>}<Chip flag={r.flag} />{r.lat != null && <span className="text-xs text-muted">{r.granularity} · within {Math.round(r.radius_m)} m</span>}</div>
+          <div className="flex items-center gap-2 flex-wrap">{memory && <span className="chip bg-amber text-navy"><Brain size={12} /> Memory</span>}<Chip flag={r.flag} />{r.lat != null && <span className="text-xs text-muted">{r.granularity} · within {Math.round(r.radius_m)} m</span>}</div>
           <p className="mt-2 text-sm min-h-[40px]">{typed}<span className="animate-pulse">▌</span></p>
           {r.not_found?.length > 0 && <div className="text-xs text-red mt-1">Not on the map: {r.not_found.join(', ')}</div>}
           <div className="mt-2 flex gap-2"><button className="btn-ghost px-3 py-1.5 text-xs" onClick={() => play(r)}><RotateCcw size={13} /> Replay</button>
@@ -127,6 +131,6 @@ export default function Demo() {
         </div>}
       </div>
     </div>
-    <div className="card p-2 h-[420px] xl:h-auto xl:min-h-[560px]"><MapView markers={markers} bands={bands} fit="markers" zoom={13} /></div>
+    <div className="card p-2 h-[420px] xl:h-[calc(100vh-6.5rem)] xl:min-h-[480px] xl:sticky xl:top-0"><MapView markers={markers} bands={bands} fit="markers" zoom={13} /></div>
   </div>
 }

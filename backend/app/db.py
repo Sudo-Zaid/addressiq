@@ -2,7 +2,7 @@
 """Application database (SQLite): organizations, users, zones, orders, learning-store observations, collection records.
 Operational data (users, zones, orders) is scoped per organization; the learning store is SHARED across organizations
 (it holds only address text + GPS, never a name or phone)."""
-import hashlib, hmac, json, os, secrets, sqlite3, time, math
+import hashlib, hmac, json, os, secrets, sqlite3, threading, time, math
 from shapely.geometry import Point, Polygon
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -25,10 +25,25 @@ CREATE TABLE IF NOT EXISTS collection(id INTEGER PRIMARY KEY, record_code TEXT, 
     lat REAL, lon REAL, accuracy REAL, drag_m REAL, consent_project INTEGER, consent_public INTEGER, status TEXT, created_at REAL);
 '''
 
+class Shared:
+    """One name, one SQLite connection PER THREAD.
+    FastAPI runs plain `def` endpoints and dependencies in a thread pool. A single sqlite3 connection shared by those threads
+    let two requests that ran at the same moment reset each other's statement, so a lookup came back empty now and then and a
+    signed-in user got "user not found" / "organization disabled". Every thread now works on its own connection."""
+    def __init__(self): self._local = threading.local()
+    def _conn(self):
+        c = getattr(self._local, 'c', None)
+        if c is None:
+            c = self._local.c = sqlite3.connect(PATH, timeout=15); c.row_factory = sqlite3.Row
+        return c
+    def __getattr__(self, name): return getattr(self._conn(), name)
+
 def connect():
     os.makedirs(os.path.dirname(PATH), exist_ok=True)
-    c = sqlite3.connect(PATH, check_same_thread=False); c.row_factory = sqlite3.Row
-    c.executescript(SCHEMA); migrate(c); return c
+    c = sqlite3.connect(PATH, timeout=15)
+    c.execute('PRAGMA journal_mode=WAL')        # readers never wait for a writer
+    c.executescript(SCHEMA); migrate(c); c.close()
+    return Shared()
 
 def migrate(c):
     """add columns introduced after the first prototype build (older app.sqlite files)"""

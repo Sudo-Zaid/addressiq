@@ -95,12 +95,16 @@ def _store_order(user, name, phone, address, amount):
     cur = DB.execute('''INSERT INTO orders(org_id,seller_id,customer_name,phone,address_text,amount,lat,lon,radius_m,granularity,flag,explanation,result_json,
                         premise_key,zone_id,rider_id,status,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
                      (user['org_id'], user['id'], name, phone, address, amount, r.get('lat'), r.get('lon'), r.get('radius_m'), r['granularity'], r['flag'],
-                      r['explanation'], json.dumps({k: r[k] for k in ('matched', 'not_found', 'candidates', 'alternatives', 'parts', 'band') if k in r}, ensure_ascii=False),
+                      r['explanation'], json.dumps({k: r[k] for k in ('matched', 'not_found', 'candidates', 'alternatives', 'parts', 'band', 'hint') if k in r}, ensure_ascii=False),
                       r['premise_key'], zone['id'] if zone else None, rider, status, time.time()))
     return cur.lastrowid
 
 def order_out(o):
-    o = dict(o); o['result'] = json.loads(o.pop('result_json') or '{}'); return o
+    o = dict(o); o['result'] = json.loads(o.pop('result_json') or '{}')
+    if o['flag'] == 'UNRESOLVED' and o['lat'] is None and 'hint' not in o['result']:      # orders stored before hints existed
+        h = GC.city_hint((o['result'].get('parts') or {}).get('city'))
+        if h: o['result']['hint'] = h
+    return o
 
 ORDER_SQL = '''SELECT o.*, u.name AS rider_name, z.name AS zone_name, z.color AS zone_color, g.name AS org_name FROM orders o
                LEFT JOIN users u ON u.id=o.rider_id LEFT JOIN zones z ON z.id=o.zone_id LEFT JOIN organizations g ON g.id=o.org_id'''

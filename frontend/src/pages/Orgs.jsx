@@ -38,7 +38,7 @@ export default function Orgs() {
         <div className="min-w-0 flex-1"><div className="font-extrabold text-bright truncate">{o.name}</div><div className="text-xs text-muted capitalize">{o.type}{o.contact && ` · ${o.contact}`}</div></div>
         <div className="flex items-center gap-1.5">
           <button onClick={() => toggle(o)} className={'btn px-3 py-1.5 text-xs ' + (o.active ? 'bg-green/12 text-green' : 'bg-red/12 text-red')}><Power size={14} /> {o.active ? 'Active' : 'Disabled'}</button>
-          <button onClick={() => remove(o)} title="Delete organization" className="btn-ghost px-2.5 py-1.5 text-xs text-muted hover:text-red"><Trash2 size={14} /></button>
+          <button onClick={() => remove(o)} title="Delete organization" className="btn px-2.5 py-1.5 text-xs bg-white border border-line text-muted hover:text-red hover:border-red/40 dark:bg-white/5"><Trash2 size={14} /></button>
         </div>
       </div>
       <div className="mt-4 grid grid-cols-4 gap-2 text-center">

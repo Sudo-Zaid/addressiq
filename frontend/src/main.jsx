@@ -46,5 +46,8 @@ const router = createBrowserRouter([
   { path: '*', element: <Navigate to="/" replace /> },
 ])
 
-ReactDOM.createRoot(document.getElementById('root')).render(<React.StrictMode><RouterProvider router={router} /></React.StrictMode>)
+// The dev server can re-run this file on a hot update; a second React root would run the whole app twice, so reload instead.
+const rootEl = document.getElementById('root')
+if (rootEl.dataset.mounted) location.reload()
+else { rootEl.dataset.mounted = '1'; ReactDOM.createRoot(rootEl).render(<React.StrictMode><RouterProvider router={router} /></React.StrictMode>) }
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('/sw.js').catch(() => {})

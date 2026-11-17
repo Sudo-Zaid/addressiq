@@ -1,4 +1,4 @@
-// Small fetch wrapper: JSON in/out, bearer token from localStorage, errors as Error(message).
+// Small fetch wrapper: JSON in/out, bearer token from localStorage, errors as Error(message) carrying the HTTP status.
 const TOKEN = 'aiq_token', USER = 'aiq_user'
 
 export const auth = {
@@ -17,7 +17,8 @@ async function call(method, path, body, isForm = false) {
   try { data = await r.json() } catch { /* empty */ }
   if (!r.ok) {
     if (r.status === 401) auth.clear()   // stale/missing token: drop it. The shells gate on /api/me and route to login.
-    throw new Error((data && (data.detail || data.message)) || ('HTTP ' + r.status))
+    const err = new Error((data && (data.detail || data.message)) || ('HTTP ' + r.status)); err.status = r.status
+    throw err
   }
   return data
 }
@@ -37,10 +38,17 @@ export const FLAG = {
 }
 export const flagOf = (f) => FLAG[f] || { cls: 'chip-grey', label: f || '—', color: '#5A6B85', hint: '' }
 
+// The original light theme is the default; 'dark' is an optional look behind the sun/moon button.
+const THEME = 'aiq_theme_v2'
 export const theme = {
-  get: () => localStorage.getItem('aiq_theme') || 'dark',
-  apply: (t) => { document.documentElement.classList.toggle('light', t === 'light'); try { localStorage.setItem('aiq_theme', t) } catch { /* ignore */ } window.dispatchEvent(new Event('aiq-theme')) },
-  toggle: () => { const next = theme.get() === 'light' ? 'dark' : 'light'; theme.apply(next); return next },
+  get: () => { try { return localStorage.getItem(THEME) === 'dark' ? 'dark' : 'light' } catch { return 'light' } },
+  apply: (t) => {
+    document.documentElement.classList.toggle('dark', t === 'dark')
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', t === 'dark' ? '#070D1C' : '#1F3864')
+    try { localStorage.setItem(THEME, t); localStorage.removeItem('aiq_theme') } catch { /* ignore */ }
+    window.dispatchEvent(new Event('aiq-theme'))
+  },
+  toggle: () => { const next = theme.get() === 'dark' ? 'light' : 'dark'; theme.apply(next); return next },
 }
 
 export const fmtMoney = (n) => 'Rs ' + Number(n || 0).toLocaleString('en-PK')
