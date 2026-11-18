@@ -13,10 +13,13 @@ from pydantic import BaseModel
 from . import db as D
 from .geocoder import Geocoder, Gazetteer
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 SECRET = os.environ.get('ADDRESSIQ_SECRET', 'dev-secret-change-me')
 app = FastAPI(title='AddressIQ API', version='0.2')
 app.add_middleware(CORSMiddleware, allow_origins=['*'], allow_methods=['*'], allow_headers=['*'])
-app.add_middleware(GZipMiddleware, minimum_size=1000)      # the app script is 1.5 MB raw, ~0.4 MB gzipped: matters on a slow uplink
 DB = D.connect(); GAZ = Gazetteer(); GC = Geocoder(GAZ, D.Store(DB)); D.seed(DB, GAZ)
 
 # ----------------------------------------------------------------------------- auth
