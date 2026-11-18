@@ -1,0 +1,21 @@
+@echo off
+REM AddressIQ - public link. Builds the web app, starts the API if it is not running, then opens a Cloudflare
+REM quick tunnel to it. The https://....trycloudflare.com address printed below works from any network for as
+REM long as this window (and the API window) stay open. A new address is issued every time this is started.
+cd /d %~dp0
+if not exist tools\cloudflared.exe (
+  echo tools\cloudflared.exe is missing. Download cloudflared-windows-amd64.exe from
+  echo https://github.com/cloudflare/cloudflared/releases/latest and save it as tools\cloudflared.exe
+  pause
+  exit /b 1
+)
+pushd frontend
+call npm run build
+popd
+curl -s -o nul -m 3 http://127.0.0.1:8000/api/health || start "AddressIQ API" cmd /k "cd backend && python -X utf8 -m uvicorn app.main:app --host 127.0.0.1 --port 8000"
+timeout /t 6 >nul
+if exist data\tunnel.log del data\tunnel.log
+echo.
+echo  === Public link: look for  https://....trycloudflare.com  below. Keep this window open. ===
+echo.
+tools\cloudflared.exe tunnel --url http://127.0.0.1:8000 --no-autoupdate --logfile data\tunnel.log

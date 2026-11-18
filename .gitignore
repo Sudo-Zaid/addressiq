@@ -5,6 +5,7 @@ data/app.sqlite-wal
 data/app.sqlite-shm
 data/osm_raw.json
 data/*.log
+tools/
 __pycache__/
 *.pyc
 .claude/

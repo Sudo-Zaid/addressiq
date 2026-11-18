@@ -1,0 +1,12 @@
+# AddressIQ backend (Python 3.11+; developed on 3.14, the Dockerfile uses 3.13)
+#   pip install -r backend/requirements.txt
+fastapi==0.163.1
+uvicorn==0.54.0
+PyJWT==2.15.1
+python-multipart==0.0.34
+pydantic==2.14.3
+rapidfuzz==3.14.6
+shapely==2.2.0
+
+# only for scripts/fetch_osm.py (re-downloading the map data); the API itself does not need it
+requests==2.34.2

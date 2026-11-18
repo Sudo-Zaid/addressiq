@@ -6,7 +6,7 @@ import hashlib, hmac, json, os, secrets, sqlite3, threading, time, math
 from shapely.geometry import Point, Polygon
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-PATH = os.path.join(ROOT, 'data', 'app.sqlite')
+PATH = os.environ.get('ADDRESSIQ_DB') or os.path.join(ROOT, 'data', 'app.sqlite')    # set ADDRESSIQ_DB to keep the data on a mounted disk
 
 SCHEMA = '''
 CREATE TABLE IF NOT EXISTS organizations(id INTEGER PRIMARY KEY, name TEXT, type TEXT, join_code TEXT UNIQUE, active INTEGER DEFAULT 1,
@@ -39,7 +39,7 @@ class Shared:
     def __getattr__(self, name): return getattr(self._conn(), name)
 
 def connect():
-    os.makedirs(os.path.dirname(PATH), exist_ok=True)
+    if os.path.dirname(PATH): os.makedirs(os.path.dirname(PATH), exist_ok=True)
     c = sqlite3.connect(PATH, timeout=15)
     c.execute('PRAGMA journal_mode=WAL')        # readers never wait for a writer
     c.executescript(SCHEMA); migrate(c); c.close()
