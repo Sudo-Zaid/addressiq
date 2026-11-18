@@ -5,6 +5,9 @@ an honest radius and a plain-word flag, dispatches orders to riders by zone, and
 Multi-organization: each courier / restaurant / shop has its own logins, zones, riders and orders; the learning
 store (address text + GPS only, never a name or phone) is shared across organizations.
 
+**Live demo: https://addressiq.live** — sign in with one of the demo accounts listed below. The link is online whenever
+the project server is running; for now that is a team laptop, so it is not up 24 hours a day.
+
 ## Team
 Final Year Project, BS Computer Science, FCIT, University of the Punjab (Jhelum Campus).
 
@@ -23,9 +26,10 @@ Needs Python 3.11+ and Node 20.19+ (or 22.12+).
 `package.json` is in `frontend/`. The map data (`data/gazetteer.sqlite`) is in the repository; the app database
 (`data/app.sqlite`) is created and seeded with the demo accounts on the first start.
 
-## Run (Windows)
-Double-click `start.bat` (or run the two commands below in two terminals), then open http://localhost:5173
-Phones on the same Wi-Fi: use the "Network" URL printed by the web server (e.g. http://192.168.18.7:5173).
+## Run on your own computer (Windows)
+Double-click `start.bat` (or run the two commands below in two terminals). The app then opens at `http://localhost:5173`.
+That address works only on the computer that is running it; phones on the same Wi-Fi use the "Network" address printed
+in the web window. Everyone else uses the live demo link above.
 
     cd backend  && python -X utf8 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     cd frontend && npm run dev
@@ -55,16 +59,18 @@ Sample orders: `data/sample_orders.csv` (15 real Jhelum / Dina addresses, Roman 
     python scripts/fetch_osm.py && python scripts/build_gazetteer.py
 
 ## Production build (single server)
-    cd frontend && npm run build        # then the API serves the app at http://localhost:8000
+    cd frontend && npm run build        # then the API serves the app on port 8000 of that machine
 
 After the build the API serves the web app and `/api` together on ONE port, so only port 8000 has to be exposed.
 
-## Public link from this laptop (Cloudflare quick tunnel)
-Double-click `share.bat`. It builds the web app, starts the API if needed and opens a Cloudflare tunnel; the window
-prints an address like `https://something.trycloudflare.com` that works from any network over HTTPS (so phone GPS
-and the microphone work too). The link lives only while that window and the API window stay open, and it is a new
-address every time. It needs `tools\cloudflared.exe` (cloudflared-windows-amd64.exe from
-https://github.com/cloudflare/cloudflared/releases — not kept in git).
+## Public link (https://addressiq.live)
+Double-click `share.bat` on the computer that hosts the demo. It builds the web app, starts the API if needed and opens
+a Cloudflare tunnel, so https://addressiq.live works from any network over HTTPS (phone GPS and the microphone work
+too). The link is up only while that window and the API window stay open.
+
+One-time setup on a new host: run `tunnel-setup.bat` (signs in to Cloudflare and creates the tunnel) and put
+`tools\cloudflared.exe` in place (cloudflared-windows-amd64.exe from https://github.com/cloudflare/cloudflared/releases,
+not kept in git). Without that setup `share.bat` still works and prints a temporary `https://….trycloudflare.com` address.
 
 ## Deploy on a server (always-on link)
     docker build -t addressiq .
