@@ -6,6 +6,7 @@ import csv, io, json, os, secrets, time
 import jwt
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -15,6 +16,7 @@ from .geocoder import Geocoder, Gazetteer
 SECRET = os.environ.get('ADDRESSIQ_SECRET', 'dev-secret-change-me')
 app = FastAPI(title='AddressIQ API', version='0.2')
 app.add_middleware(CORSMiddleware, allow_origins=['*'], allow_methods=['*'], allow_headers=['*'])
+app.add_middleware(GZipMiddleware, minimum_size=1000)      # the app script is 1.5 MB raw, ~0.4 MB gzipped: matters on a slow uplink
 DB = D.connect(); GAZ = Gazetteer(); GC = Geocoder(GAZ, D.Store(DB)); D.seed(DB, GAZ)
 
 # ----------------------------------------------------------------------------- auth
