@@ -12,8 +12,8 @@ if not exist tools\cloudflared.exe (
 pushd frontend
 call npm run build
 popd
-curl -s -o nul -m 3 http://127.0.0.1:8000/api/health || start "AddressIQ API" cmd /k "cd backend && python -X utf8 -m uvicorn app.main:app --host 127.0.0.1 --port 8000"
-timeout /t 6 >nul
+curl -s -o nul -m 3 http://127.0.0.1:8000/api/health || start "AddressIQ API" cmd /k api.bat
+timeout /t 8 >nul
 if exist data\tunnel.log del data\tunnel.log
 echo.
 echo  === Public link: look for  https://....trycloudflare.com  below. Keep this window open. ===
