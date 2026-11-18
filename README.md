@@ -5,6 +5,15 @@ an honest radius and a plain-word flag, dispatches orders to riders by zone, and
 Multi-organization: each courier / restaurant / shop has its own logins, zones, riders and orders; the learning
 store (address text + GPS only, never a name or phone) is shared across organizations.
 
+## Team
+Final Year Project, BS Computer Science, FCIT, University of the Punjab (Jhelum Campus).
+
+- Muhammad Zaid — [Sudo-Zaid](https://github.com/Sudo-Zaid)
+- Kaif Ahmad — [Kaifi-Ahmad](https://github.com/Kaifi-Ahmad)
+- Ans Abbas — [ansabbas56](https://github.com/ansabbas56)
+
+How we work together (one branch per person, pull requests into `master`): see [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Install (first time)
 Needs Python 3.11+ and Node 20.19+ (or 22.12+).
 
