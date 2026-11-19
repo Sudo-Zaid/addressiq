@@ -1,0 +1,21 @@
+# Builds the Dockerfile and starts the container once, so a broken build is caught before it reaches the hosting.
+name: docker build
+on:
+  push:
+    branches: [master]
+    paths: ['Dockerfile', '.dockerignore', 'backend/**', 'frontend/**', 'data/gazetteer.sqlite', '.github/workflows/docker.yml']
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the image
+        run: docker build -t addressiq .
+      - name: Start it and check that the API and the web app answer
+        run: |
+          docker run -d --name aiq -p 8000:8000 -e PORT=8000 addressiq
+          for i in $(seq 1 30); do curl -fs http://localhost:8000/api/health && break; sleep 2; done
+          curl -fs http://localhost:8000/api/health
+          curl -fs -o /dev/null http://localhost:8000/login
+          docker logs aiq | tail -20

@@ -1,0 +1,15 @@
+# Render blueprint: one free web service built from the Dockerfile (web app + API on one port).
+# On render.com: New + -> Blueprint -> pick this repository -> Apply.
+# Free plan: the service sleeps after 15 minutes without visitors (the first request then takes about a minute)
+# and its disk is temporary, so the app database goes back to the seeded demo data after every restart.
+services:
+  - type: web
+    name: addressiq
+    runtime: docker
+    plan: free
+    region: singapore
+    branch: master
+    healthCheckPath: /api/health
+    envVars:
+      - key: ADDRESSIQ_SECRET
+        generateValue: true
