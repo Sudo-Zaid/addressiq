@@ -13,7 +13,23 @@ from pydantic import BaseModel
 from . import db as D
 from .geocoder import Geocoder, Gazetteer
 
-SECRET = os.environ.get('ADDRESSIQ_SECRET', 'dev-secret-change-me')
+def _secret():
+    """key that signs the login tokens: ADDRESSIQ_SECRET if set, otherwise a random one made on the first start and kept
+    next to the database (the code is public, so a fixed default would let anyone forge a login)"""
+    s = os.environ.get('ADDRESSIQ_SECRET')
+    if s: return s
+    path = os.path.join(os.path.dirname(D.PATH) or '.', 'secret.key')
+    try:
+        with open(path, encoding='utf-8') as f: s = f.read().strip()
+        if s: return s
+    except OSError: pass
+    s = secrets.token_hex(32)
+    try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, 'w', encoding='utf-8') as f: f.write(s)
+    except OSError: pass          # read-only disk: the key then lives only until the next restart
+    return s
+SECRET = _secret()
 app = FastAPI(title='AddressIQ API', version='0.2')
 app.add_middleware(CORSMiddleware, allow_origins=['*'], allow_methods=['*'], allow_headers=['*'])
 app.add_middleware(GZipMiddleware, minimum_size=1000)      # the app script is 1.5 MB raw, ~0.4 MB gzipped: matters on a slow uplink

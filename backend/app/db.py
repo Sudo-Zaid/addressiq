@@ -41,7 +41,10 @@ class Shared:
 def connect():
     if os.path.dirname(PATH): os.makedirs(os.path.dirname(PATH), exist_ok=True)
     c = sqlite3.connect(PATH, timeout=15)
-    c.execute('PRAGMA journal_mode=WAL')        # readers never wait for a writer
+    # WAL lets readers work during a write but needs a local disk; where the home folder is a network share
+    # (PythonAnywhere) the classic journal is the safe choice. ADDRESSIQ_JOURNAL overrides the guess.
+    mode = (os.environ.get('ADDRESSIQ_JOURNAL') or ('DELETE' if os.environ.get('PYTHONANYWHERE_DOMAIN') else 'WAL')).upper()
+    c.execute('PRAGMA journal_mode=%s' % (mode if mode in ('WAL', 'DELETE', 'TRUNCATE') else 'WAL'))
     c.executescript(SCHEMA); migrate(c); c.close()
     return Shared()
 

@@ -3,6 +3,7 @@ frontend/dist/
 data/app.sqlite
 data/app.sqlite-wal
 data/app.sqlite-shm
+data/secret.key
 data/osm_raw.json
 data/*.log
 tools/
